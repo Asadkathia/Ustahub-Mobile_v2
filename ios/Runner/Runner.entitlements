@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Enable push notifications -->
+	<key>aps-environment</key>
+	<string>development</string>
+	
+	<!-- Enable background app refresh -->
+	<key>com.apple.developer.background-modes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>background-fetch</string>
+	</array>
+	
+	<!-- Associated domains for deep linking -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:brownfish.com</string>
+		<string>applinks:ustahub.brownfish.com</string>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "500582669374",
+    "project_id": "ustahub-a3563",
+    "storage_bucket": "ustahub-a3563.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:500582669374:android:0edaf26fcc1ae85180856f",
+        "android_client_info": {
+          "package_name": "com.brownfish.ustahubb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8TBtKdhPkx4To3rBSZk_AcONcI32qSpY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
