@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # Xcode Cloud post-clone script for Flutter iOS builds
 # This script runs after the repository is cloned and before the build starts
 # Last updated: 2025-11-30
 # Location: ios/ci_scripts/ci_post_clone.sh
 
-set -e
+set -euo pipefail
 
 echo "=========================================="
 echo "🚀 Xcode Cloud Post-Clone Script Started"
@@ -86,7 +86,7 @@ fi
 
 echo "✅ Generated.xcconfig found at: ios/Flutter/Generated.xcconfig"
 echo "📄 Generated.xcconfig contents (first 5 lines):"
-head -5 ios/Flutter/Generated.xcconfig || echo "Could not read file"
+head -5 ios/Flutter/Generated.xcconfig 2>/dev/null || echo "Could not read file"
 echo ""
 
 # Install CocoaPods dependencies
@@ -136,25 +136,25 @@ fi
 echo "✅ Pods directory created"
 echo ""
 
-# Verify required file lists exist
-REQUIRED_FILES=(
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
-)
-
+# Verify required file lists exist (using bash-compatible approach)
 echo "🔍 Verifying CocoaPods file lists..."
 ALL_FILES_EXIST=true
-for file in "${REQUIRED_FILES[@]}"; do
+
+check_file() {
+  local file="$1"
   if [ ! -f "$file" ]; then
-    echo "❌ ERROR: Required file not found: $file"
+    echo "⚠️  Required file not found: $file"
     ALL_FILES_EXIST=false
   else
     echo "✅ Found: $file"
   fi
-done
+}
+
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
 
 if [ "$ALL_FILES_EXIST" = false ]; then
   echo ""

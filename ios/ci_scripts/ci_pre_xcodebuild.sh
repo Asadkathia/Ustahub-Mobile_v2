@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # Xcode Cloud pre-xcodebuild script for Flutter iOS builds
 # This script runs right before xcodebuild executes
 # Last updated: 2025-11-30
 # Location: ios/ci_scripts/ci_pre_xcodebuild.sh
 
-set -e
+set -euo pipefail
 
 echo "=========================================="
 echo "🔨 Xcode Cloud Pre-Xcodebuild Script Started"
@@ -53,14 +53,15 @@ flutter --version
 echo ""
 
 # Detect and export FLUTTER_ROOT for xcodebuild
-if [ -z "$FLUTTER_ROOT" ]; then
-  FLUTTER_ROOT=$(flutter --version --machine | grep -o '"flutterRoot":"[^"]*' | cut -d'"' -f4 || echo "")
+if [ -z "${FLUTTER_ROOT:-}" ]; then
+  FLUTTER_ROOT=$(flutter --version --machine 2>/dev/null | grep -o '"flutterRoot":"[^"]*' | cut -d'"' -f4 || echo "")
   if [ -z "$FLUTTER_ROOT" ]; then
     # Fallback: try to find Flutter in common locations
     if [ -d "$HOME/flutter" ]; then
       FLUTTER_ROOT="$HOME/flutter"
     elif command -v flutter &> /dev/null; then
-      FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
+      FLUTTER_BIN=$(which flutter)
+      FLUTTER_ROOT=$(dirname "$(dirname "$FLUTTER_BIN")")
     fi
   fi
 fi
@@ -114,29 +115,28 @@ if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
 fi
 
 # Update Generated.xcconfig with correct FLUTTER_ROOT if needed
-if [ -n "$FLUTTER_ROOT" ]; then
+if [ -n "${FLUTTER_ROOT:-}" ]; then
   echo "🔧 Updating Generated.xcconfig with FLUTTER_ROOT..."
   echo "   Current FLUTTER_ROOT: $FLUTTER_ROOT"
   
   # Create a temporary file with updated FLUTTER_ROOT
   TEMP_CONFIG="/tmp/Generated.xcconfig.tmp"
-  if grep -q "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig; then
+  if grep -q "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig 2>/dev/null; then
     # Update existing FLUTTER_ROOT line
-    sed "s|^FLUTTER_ROOT=.*|FLUTTER_ROOT=$FLUTTER_ROOT|" ios/Flutter/Generated.xcconfig > "$TEMP_CONFIG"
+    if sed "s|^FLUTTER_ROOT=.*|FLUTTER_ROOT=$FLUTTER_ROOT|" ios/Flutter/Generated.xcconfig > "$TEMP_CONFIG" 2>/dev/null; then
+      mv "$TEMP_CONFIG" ios/Flutter/Generated.xcconfig
+      echo "   ✅ Updated FLUTTER_ROOT in Generated.xcconfig"
+    else
+      echo "   ⚠️  WARNING: Failed to update FLUTTER_ROOT using sed"
+      rm -f "$TEMP_CONFIG"
+    fi
   else
     # Add FLUTTER_ROOT at the beginning
     {
       echo "FLUTTER_ROOT=$FLUTTER_ROOT"
       cat ios/Flutter/Generated.xcconfig
-    } > "$TEMP_CONFIG"
-  fi
-  
-  # Verify the temp file was created and move it
-  if [ -f "$TEMP_CONFIG" ]; then
-    mv "$TEMP_CONFIG" ios/Flutter/Generated.xcconfig
-    echo "   ✅ Updated Generated.xcconfig"
-  else
-    echo "   ⚠️  WARNING: Failed to update Generated.xcconfig"
+    } > "$TEMP_CONFIG" 2>/dev/null && mv "$TEMP_CONFIG" ios/Flutter/Generated.xcconfig && echo "   ✅ Added FLUTTER_ROOT to Generated.xcconfig" || echo "   ⚠️  WARNING: Failed to add FLUTTER_ROOT"
+    rm -f "$TEMP_CONFIG"
   fi
 fi
 
@@ -192,25 +192,25 @@ fi
 echo "✅ Pods directory created"
 echo ""
 
-# Verify required file lists exist
-REQUIRED_FILES=(
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist"
-  "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
-)
-
+# Verify required file lists exist (using /bin/sh compatible approach)
 echo "🔍 Verifying CocoaPods file lists..."
 ALL_FILES_EXIST=true
-for file in "${REQUIRED_FILES[@]}"; do
+
+check_file() {
+  local file="$1"
   if [ ! -f "$file" ]; then
-    echo "❌ ERROR: Required file not found: $file"
+    echo "⚠️  Required file not found: $file"
     ALL_FILES_EXIST=false
   else
     echo "✅ Found: $file"
   fi
-done
+}
+
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-input-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks-Release-output-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-input-files.xcfilelist"
+check_file "Pods/Target Support Files/Pods-Runner/Pods-Runner-resources-Release-output-files.xcfilelist"
 
 if [ "$ALL_FILES_EXIST" = false ]; then
   echo ""
@@ -228,10 +228,10 @@ echo "✅ Pre-Xcodebuild script completed successfully!"
 echo "=========================================="
 echo ""
 echo "📝 Final configuration:"
-echo "   FLUTTER_ROOT=$FLUTTER_ROOT"
+echo "   FLUTTER_ROOT=${FLUTTER_ROOT:-<not set>}"
 echo "   PROJECT_ROOT=$PROJECT_ROOT"
 if [ -f "ios/Flutter/Generated.xcconfig" ]; then
   echo "   Generated.xcconfig FLUTTER_ROOT:"
-  grep "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig || echo "     (not found in file)"
+  grep "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig 2>/dev/null || echo "     (not found in file)"
 fi
 echo ""
