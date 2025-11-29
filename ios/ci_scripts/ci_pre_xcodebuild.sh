@@ -52,6 +52,26 @@ echo "🔍 Verifying Flutter installation..."
 flutter --version
 echo ""
 
+# Detect and export FLUTTER_ROOT for xcodebuild
+if [ -z "$FLUTTER_ROOT" ]; then
+  FLUTTER_ROOT=$(flutter --version --machine | grep -o '"flutterRoot":"[^"]*' | cut -d'"' -f4 || echo "")
+  if [ -z "$FLUTTER_ROOT" ]; then
+    # Fallback: try to find Flutter in common locations
+    if [ -d "$HOME/flutter" ]; then
+      FLUTTER_ROOT="$HOME/flutter"
+    elif command -v flutter &> /dev/null; then
+      FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
+    fi
+  fi
+fi
+
+if [ -n "$FLUTTER_ROOT" ]; then
+  export FLUTTER_ROOT
+  echo "✅ FLUTTER_ROOT set to: $FLUTTER_ROOT"
+else
+  echo "⚠️  WARNING: Could not determine FLUTTER_ROOT"
+fi
+
 # Enable Flutter for iOS
 echo "📱 Precaching Flutter iOS artifacts..."
 flutter precache --ios
@@ -88,6 +108,18 @@ if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
   echo "📂 Checking ios directory:"
   ls -la ios/ | head -10
   exit 1
+fi
+
+# Update Generated.xcconfig with correct FLUTTER_ROOT if needed
+if [ -n "$FLUTTER_ROOT" ]; then
+  echo "🔧 Updating Generated.xcconfig with FLUTTER_ROOT..."
+  # Use sed to update FLUTTER_ROOT if it exists, or add it if it doesn't
+  if grep -q "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig; then
+    sed -i '' "s|^FLUTTER_ROOT=.*|FLUTTER_ROOT=$FLUTTER_ROOT|" ios/Flutter/Generated.xcconfig
+  else
+    # Add FLUTTER_ROOT at the beginning of the file
+    echo "FLUTTER_ROOT=$FLUTTER_ROOT" | cat - ios/Flutter/Generated.xcconfig > /tmp/Generated.xcconfig.tmp && mv /tmp/Generated.xcconfig.tmp ios/Flutter/Generated.xcconfig
+  fi
 fi
 
 echo "✅ Generated.xcconfig found at: ios/Flutter/Generated.xcconfig"
@@ -176,3 +208,8 @@ echo ""
 echo "=========================================="
 echo "✅ Pre-Xcodebuild script completed successfully!"
 echo "=========================================="
+echo ""
+echo "📝 Key configuration:"
+echo "   FLUTTER_ROOT=$FLUTTER_ROOT"
+echo "   Generated.xcconfig updated with FLUTTER_ROOT"
+echo ""
