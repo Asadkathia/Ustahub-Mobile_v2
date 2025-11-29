@@ -34,15 +34,8 @@ class FcmController extends GetxController {
   }
 
   /// Get FCM token and store it to server
-  /// Note: You'll need to implement the actual FCM token retrieval based on your Firebase setup
   Future<void> initializeAndStoreFcmToken() async {
     try {
-      // TODO: Replace this with actual Firebase messaging token retrieval
-      // Example:
-      // FirebaseMessaging messaging = FirebaseMessaging.instance;
-      // String? token = await messaging.getToken();
-
-      // For now, this is a placeholder method
       String? fcmToken = await _getFcmTokenFromFirebase();
 
       if (fcmToken != null && fcmToken.isNotEmpty) {

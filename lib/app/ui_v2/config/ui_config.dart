@@ -1,6 +1,6 @@
 class UIConfig {
   // Feature flag to switch between old and new UI
-  static const bool useNewUI = true; // Change to true when ready to use new UI
+  static const bool useNewUI = true;
   
   // Individual screen flags (for gradual migration)
   static const bool useNewSplash = true;
@@ -16,17 +16,8 @@ class UIConfig {
   static const bool useNewProviderHome = true;
   static const bool useNewServicesView = true;
   
-  // You can also load this from SharedPreferences or remote config
   static Future<bool> shouldUseNewUI() async {
-    // Option 1: Simple flag
     return useNewUI;
-    
-    // Option 2: From SharedPreferences
-    // final pref = await SharedPreferences.getInstance();
-    // return pref.getBool('use_new_ui') ?? false;
-    
-    // Option 3: Remote config (Firebase, etc.)
-    // return await RemoteConfigService.getBool('use_new_ui');
   }
 }
 

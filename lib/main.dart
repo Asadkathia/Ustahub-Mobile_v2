@@ -9,10 +9,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}'); 
 }
 
-//AIzaSyCihk-1twQc1HoRdm_xZrXvz97sFBoV-Y8
-
 void main() async {
-  //  ZPNsEventHandlerManager.loadingEventHandler();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -42,14 +39,6 @@ void main() async {
 
   // Handle Flutter lifecycle errors
   FlutterError.onError = (FlutterErrorDetails details) {
-    // Check if this is the known Zego lifecycle error
-    if (details.exception.toString().contains('Invalid state transition') &&
-        details.exception.toString().contains('AppLifecycleState')) {
-      // Log the error but don't crash the app
-      print('Lifecycle transition error (handled): ${details.exception}');
-      return;
-    }
-    // For other errors, use default handling
     FlutterError.presentError(details);
   };
 
@@ -107,10 +96,7 @@ class MainApp extends StatelessWidget {
           // ...
         ),
       ),
-      shouldHandleNotification: (msg) {
-        // add some logic and return bool on whether to handle a notif or not
-        return true;
-      },
+      shouldHandleNotification: (msg) => true,
       onOpenNotificationArrive: (info) {
         print("[FIREBASE DEBUG] 🔔 Notification arrived while app open");
         print(
@@ -126,33 +112,18 @@ class MainApp extends StatelessWidget {
         print("[FIREBASE DEBUG] Payload: ${info.payload}");
         print("[FIREBASE DEBUG] App State: ${info.appState}");
         print("[FIREBASE DEBUG] Firebase Message: ${info.firebaseMessage}");
-
-        /// If you want to push a screen on notification tap
-        ///
-        // Globals.navigatorKey.currentState?.pushNamed(
-        //   payload['screenId'],
-        // );
-        ///
-        /// or
-        ///
-        /// Get current context
-        // final context = Globals.navigatorKey.currentContext!;
       },
-      onFcmTokenInitialize: (token) async{
+      onFcmTokenInitialize: (token) async {
         Sharedprefhelper.setSharedPrefHelper('FcmToken', token!);
-
-
-       if (token != null && token.isNotEmpty) {
+        
+        if (token != null && token.isNotEmpty) {
           await FcmService.storeFcmToken(token);
         }
-        //
-       // initializeDependencyInjection(prefToken, fcmToken: token);
         print("[FIREBASE DEBUG] 🔑 FCM Token initialized: $token");
       },
-      onFcmTokenUpdate: (token)async {
+      onFcmTokenUpdate: (token) async {
         Sharedprefhelper.setSharedPrefHelper('FcmToken', token);
         print("[FIREBASE DEBUG] 🔄 FCM Token updated: $token");
-        // If you want to update the token in your backend
         String? prefToken = await Sharedprefhelper.getToken();
         if (prefToken != null && prefToken.isNotEmpty) {
           await FcmService.storeFcmToken(token);

@@ -24,8 +24,6 @@ class FilterController extends GetxController {
   }
 
   void applyFilters() {
-    // TODO: Implement logic to apply filters based on selectedServices, selectedRating
-    // This is where you would call your filter API
     Get.back(
       result: {
         'services': selectedServices.toList(),

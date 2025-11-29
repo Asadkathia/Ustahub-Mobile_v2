@@ -108,9 +108,28 @@ fi
 echo "📄 Podfile found"
 echo ""
 
-# Run pod install
+# Run pod install with retry logic for network issues
 echo "🔨 Running pod install..."
-pod install --repo-update
+MAX_RETRIES=3
+RETRY_COUNT=0
+POD_INSTALL_SUCCESS=false
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if pod install --repo-update; then
+    POD_INSTALL_SUCCESS=true
+    break
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+      echo "⚠️  pod install failed (attempt $RETRY_COUNT/$MAX_RETRIES), retrying in 10 seconds..."
+      sleep 10
+    else
+      echo "❌ pod install failed after $MAX_RETRIES attempts"
+      echo "⚠️  This might be due to network issues with external dependencies (e.g., ZegoCloud)"
+      echo "⚠️  Attempting to continue anyway - some pods may be missing..."
+    fi
+  fi
+done
 
 # Verify Pods directory exists
 if [ ! -d "Pods" ]; then
