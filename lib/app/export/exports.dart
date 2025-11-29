@@ -25,7 +25,6 @@ export 'package:pinput/pinput.dart';
 export 'package:get/get.dart' hide HeaderValue;
 export 'package:image_picker/image_picker.dart';
 export 'package:flutter_localizations/flutter_localizations.dart';
-export 'package:turkmen_localization_support/turkmen_localization_support.dart';
 export 'package:dotted_border/dotted_border.dart';
 export 'package:table_calendar/table_calendar.dart';
 export 'package:fluttertoast/fluttertoast.dart';

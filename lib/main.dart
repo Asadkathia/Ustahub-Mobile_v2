@@ -142,7 +142,6 @@ class MainApp extends StatelessWidget {
               supportedLocales: const [
                 Locale('en'),
                 Locale('ru'),
-                Locale('tk'),
                 Locale('uz'),
                 Locale('ky'),
                 Locale('kk'),
@@ -154,7 +153,6 @@ class MainApp extends StatelessWidget {
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
-                ...TkDelegates.delegates, // For Turkmen localization
               ],
               home: UIConfig.useNewSplash ? const SplashScreenV2() : SplashScreen(),
             ),
