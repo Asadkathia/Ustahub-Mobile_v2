@@ -119,7 +119,7 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
       sleep 10
     else
       echo "❌ pod install failed after $MAX_RETRIES attempts"
-      echo "⚠️  This might be due to network issues with external dependencies (e.g., ZegoCloud)"
+      echo "⚠️  This might be due to network issues with external dependencies"
       echo "⚠️  Attempting to continue anyway - some pods may be missing..."
     fi
   fi
