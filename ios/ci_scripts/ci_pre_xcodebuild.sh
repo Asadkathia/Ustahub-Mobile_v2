@@ -94,8 +94,11 @@ if [ ! -d "ios/Flutter" ]; then
   mkdir -p ios/Flutter
 fi
 
-# Force generation of Generated.xcconfig
+# Force generation of Generated.xcconfig with FLUTTER_ROOT set
 echo "🔧 Generating Flutter configuration files..."
+if [ -n "$FLUTTER_ROOT" ]; then
+  export FLUTTER_ROOT
+fi
 cd ios
 flutter pub get
 cd "$PROJECT_ROOT"
@@ -113,18 +116,33 @@ fi
 # Update Generated.xcconfig with correct FLUTTER_ROOT if needed
 if [ -n "$FLUTTER_ROOT" ]; then
   echo "🔧 Updating Generated.xcconfig with FLUTTER_ROOT..."
-  # Use sed to update FLUTTER_ROOT if it exists, or add it if it doesn't
+  echo "   Current FLUTTER_ROOT: $FLUTTER_ROOT"
+  
+  # Create a temporary file with updated FLUTTER_ROOT
+  TEMP_CONFIG="/tmp/Generated.xcconfig.tmp"
   if grep -q "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig; then
-    sed -i '' "s|^FLUTTER_ROOT=.*|FLUTTER_ROOT=$FLUTTER_ROOT|" ios/Flutter/Generated.xcconfig
+    # Update existing FLUTTER_ROOT line
+    sed "s|^FLUTTER_ROOT=.*|FLUTTER_ROOT=$FLUTTER_ROOT|" ios/Flutter/Generated.xcconfig > "$TEMP_CONFIG"
   else
-    # Add FLUTTER_ROOT at the beginning of the file
-    echo "FLUTTER_ROOT=$FLUTTER_ROOT" | cat - ios/Flutter/Generated.xcconfig > /tmp/Generated.xcconfig.tmp && mv /tmp/Generated.xcconfig.tmp ios/Flutter/Generated.xcconfig
+    # Add FLUTTER_ROOT at the beginning
+    {
+      echo "FLUTTER_ROOT=$FLUTTER_ROOT"
+      cat ios/Flutter/Generated.xcconfig
+    } > "$TEMP_CONFIG"
+  fi
+  
+  # Verify the temp file was created and move it
+  if [ -f "$TEMP_CONFIG" ]; then
+    mv "$TEMP_CONFIG" ios/Flutter/Generated.xcconfig
+    echo "   ✅ Updated Generated.xcconfig"
+  else
+    echo "   ⚠️  WARNING: Failed to update Generated.xcconfig"
   fi
 fi
 
 echo "✅ Generated.xcconfig found at: ios/Flutter/Generated.xcconfig"
-echo "📄 Generated.xcconfig contents (first 5 lines):"
-head -5 ios/Flutter/Generated.xcconfig || echo "Could not read file"
+echo "📄 Generated.xcconfig full contents:"
+cat ios/Flutter/Generated.xcconfig || echo "Could not read file"
 echo ""
 
 # Install CocoaPods dependencies
@@ -209,7 +227,11 @@ echo "=========================================="
 echo "✅ Pre-Xcodebuild script completed successfully!"
 echo "=========================================="
 echo ""
-echo "📝 Key configuration:"
+echo "📝 Final configuration:"
 echo "   FLUTTER_ROOT=$FLUTTER_ROOT"
-echo "   Generated.xcconfig updated with FLUTTER_ROOT"
+echo "   PROJECT_ROOT=$PROJECT_ROOT"
+if [ -f "ios/Flutter/Generated.xcconfig" ]; then
+  echo "   Generated.xcconfig FLUTTER_ROOT:"
+  grep "^FLUTTER_ROOT=" ios/Flutter/Generated.xcconfig || echo "     (not found in file)"
+fi
 echo ""
