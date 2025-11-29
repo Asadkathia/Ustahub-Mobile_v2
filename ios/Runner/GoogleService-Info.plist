@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.asadkathia.ustahubb.dev</string>
+	<string>com.brownfish.ustahubb</string>
 	<key>PROJECT_ID</key>
 	<string>ustahub-a3563</string>
 	<key>STORAGE_BUCKET</key>
