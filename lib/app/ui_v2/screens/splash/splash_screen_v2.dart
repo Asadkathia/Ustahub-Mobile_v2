@@ -28,6 +28,28 @@ class _SplashScreenV2State extends State<SplashScreenV2> {
     String? role = await Sharedprefhelper.getSharedPrefHelper('userRole');
     print("Role: $role");
     
+    // Check for Supabase session (for Google OAuth)
+    final supabase = SupabaseClientService.instance;
+    final supabaseSession = supabase.auth.currentSession;
+    final hasSupabaseSession = supabaseSession != null;
+    
+    // Check if there's a pending Google auth (user just completed OAuth)
+    final pendingGoogleAuthRole = await Sharedprefhelper.getSharedPrefHelper('pendingGoogleAuthRole');
+    
+    if (hasSupabaseSession && pendingGoogleAuthRole != null) {
+      // Handle Google auth callback
+      print("[SPLASH] 🔐 Handling Google auth callback for role: $pendingGoogleAuthRole");
+      try {
+        final loginController = Get.put(LoginController());
+        await loginController.handlePostGoogleSignIn(pendingGoogleAuthRole, supabaseSession);
+        await Sharedprefhelper.removeSharedPrefHelper('pendingGoogleAuthRole');
+        return; // Navigation handled in _handlePostGoogleSignIn
+      } catch (e) {
+        print("[SPLASH] ❌ Error handling Google auth: $e");
+        // Fall through to normal flow
+      }
+    }
+    
     // Check if user has seen onboarding before
     String? hasSeenOnboarding = await Sharedprefhelper.getSharedPrefHelper('hasSeenOnboarding');
     String? userMode = await Sharedprefhelper.getSharedPrefHelper('userMode');
@@ -43,7 +65,7 @@ class _SplashScreenV2State extends State<SplashScreenV2> {
     await _precacheImages();
 
     Timer(const Duration(seconds: 3), () {
-     if (token != null && token.isNotEmpty) {
+     if (token != null && token.isNotEmpty || hasSupabaseSession) {
        // User is logged in, go to main app
        AppRouterV2.goToNavBar(role: role ?? "consumer");
         if(role == "consumer" || role == null){

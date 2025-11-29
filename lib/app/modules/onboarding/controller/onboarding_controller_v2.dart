@@ -23,8 +23,16 @@ class OnboardingControllerV2 extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initializeLocation();
+    // Load slides immediately without waiting for location
+    // Location will be used for filtering but won't block initial load
     fetchSlides();
+    // Initialize location in background (non-blocking)
+    _initializeLocation().then((_) {
+      // Refresh slides with location info once available
+      if (currentCity.value.isNotEmpty || currentCountry.value.isNotEmpty) {
+        fetchSlides();
+      }
+    });
   }
 
   /// Initialize location controller and get user's location

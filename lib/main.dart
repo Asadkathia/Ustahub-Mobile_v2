@@ -173,6 +173,10 @@ class MainApp extends StatelessWidget {
                 Locale('ru'),
                 Locale('tk'),
                 Locale('uz'),
+                Locale('ky'),
+                Locale('kk'),
+                Locale('ur'),
+                Locale('ar'),
               ],
               localizationsDelegates: const [
                 AppLocalizations.delegate,

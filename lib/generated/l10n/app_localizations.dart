@@ -5,9 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_ar.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_kk.dart';
+import 'app_localizations_ky.dart';
 import 'app_localizations_ru.dart';
 import 'app_localizations_tk.dart';
+import 'app_localizations_ur.dart';
 import 'app_localizations_uz.dart';
 
 // ignore_for_file: type=lint
@@ -96,9 +100,13 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('ar'),
     Locale('en'),
+    Locale('kk'),
+    Locale('ky'),
     Locale('ru'),
     Locale('tk'),
+    Locale('ur'),
     Locale('uz'),
   ];
 
@@ -1169,8 +1177,16 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'ru', 'tk', 'uz'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'ar',
+    'en',
+    'kk',
+    'ky',
+    'ru',
+    'tk',
+    'ur',
+    'uz',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1179,12 +1195,20 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'ar':
+      return AppLocalizationsAr();
     case 'en':
       return AppLocalizationsEn();
+    case 'kk':
+      return AppLocalizationsKk();
+    case 'ky':
+      return AppLocalizationsKy();
     case 'ru':
       return AppLocalizationsRu();
     case 'tk':
       return AppLocalizationsTk();
+    case 'ur':
+      return AppLocalizationsUr();
     case 'uz':
       return AppLocalizationsUz();
   }

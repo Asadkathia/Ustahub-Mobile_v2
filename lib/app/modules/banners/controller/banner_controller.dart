@@ -19,8 +19,16 @@ class BannerController extends GetxController {
   }
 
   Future<void> _init() async {
-    await _initializeLocation();
-    await getBanners();
+    // Load banners immediately without waiting for location
+    // Location will be used for filtering but won't block initial load
+    getBanners();
+    // Initialize location in background (non-blocking)
+    _initializeLocation().then((_) {
+      // Refresh banners with location info once available
+      if (currentCity.value.isNotEmpty || currentCountry.value.isNotEmpty) {
+        getBanners();
+      }
+    });
   }
 
   /// Initialize location controller and get user's location

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:carousel_slider/carousel_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/common_model_class/ProviderListModelClass.dart';
 import 'package:ustahub/app/modules/common_model_class/banner_model_class.dart';
@@ -244,11 +245,20 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        imageUrl,
+                      CachedNetworkImage(
+                        imageUrl: imageUrl,
                         fit: BoxFit.cover,
                         alignment: const Alignment(0.1, 0),
-                        errorBuilder: (context, error, stackTrace) {
+                        placeholder: (context, url) => Container(
+                          color: AppColorsV2.surface,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColorsV2.primary,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) {
                           debugPrint('Error loading banner image: $imageUrl');
                           return Container(
                             color: AppColorsV2.surface,
@@ -259,6 +269,8 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                             ),
                           );
                         },
+                        memCacheWidth: (400 * MediaQuery.of(context).devicePixelRatio).round(),
+                        memCacheHeight: (200 * MediaQuery.of(context).devicePixelRatio).round(),
                       ),
                       Positioned(
                         bottom: AppSpacing.mdVertical,

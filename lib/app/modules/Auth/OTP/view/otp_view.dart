@@ -99,7 +99,7 @@ class OtpView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  200.ph,
+                  50.ph,
                   Obx(()=> logic.isLoading.value ? Center(child: CircularProgressIndicator(),):  BuildBasicButton(
                     onPressed: () {
 
@@ -113,7 +113,56 @@ class OtpView extends StatelessWidget {
                       // }
                     },
                     title: AppLocalizations.of(context)!.verify,
-                  ),)
+                  ),),
+                  30.ph,
+                  // Divider with "OR" text
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppColors.grey.withOpacity(0.3))),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          "OR",
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14.sp,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: AppColors.grey.withOpacity(0.3))),
+                    ],
+                  ),
+                  30.ph,
+                  // Google Sign-In Button
+                  GetBuilder<LoginController>(
+                    init: Get.put(LoginController()),
+                    builder: (loginLogic) {
+                      return Obx(
+                        () => BuildBasicButton(
+                          buttonColor: Colors.white,
+                          onPressed: loginLogic.isGoogleSigningIn.value || logic.isLoading.value
+                              ? () {} // Disable when loading
+                              : () {
+                                  loginLogic.signInWithGoogle(role);
+                                },
+                          title: loginLogic.isGoogleSigningIn.value
+                              ? "Signing in..."
+                              : AppLocalizations.of(context)!.loginGoogle,
+                          textStyle: GoogleFonts.ubuntu(
+                            color: Colors.black,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          icon: SvgPicture.asset(
+                            height: 24.h,
+                            width: 24.w,
+                            AppVectors.svgGoogle,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Spacer(),
                 ],
               ),
             ),

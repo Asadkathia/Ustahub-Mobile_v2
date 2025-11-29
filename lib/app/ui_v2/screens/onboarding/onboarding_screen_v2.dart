@@ -6,6 +6,7 @@ import 'package:ustahub/app/modules/Auth/login/view/login_view.dart';
 import 'package:ustahub/app/ui_v2/config/ui_config.dart';
 import 'package:ustahub/app/ui_v2/navigation/app_router_v2.dart';
 import 'package:ustahub/app/ui_v2/screens/auth/login/login_screen_v2.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
@@ -58,32 +59,47 @@ class OnboardingScreenV2 extends StatelessWidget {
     final imagePath = slide.resolvedImage;
     final isNetwork = imagePath != null && imagePath.startsWith('http');
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        if (imagePath != null && imagePath.isNotEmpty)
-          (isNetwork
-              ? Image.network(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  alignment: const Alignment(0.1, 0),
-                  errorBuilder: (_, __, ___) => _buildImageFallback(imagePath),
-                )
-              : Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  alignment: const Alignment(0.1, 0),
-                  errorBuilder: (_, __, ___) => _buildImageFallback(imagePath),
-                ))
-        else
-          _buildImageFallback(imagePath),
-        Positioned(
-          bottom: 200.h,
-          left: 0,
-          right: 0,
-          child: Obx(() => _buildPaginationDots()),
-        ),
-      ],
+    return Builder(
+      builder: (context) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imagePath != null && imagePath.isNotEmpty)
+              (isNetwork
+                  ? CachedNetworkImage(
+                      imageUrl: imagePath,
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0.1, 0),
+                      placeholder: (context, url) => Container(
+                        color: AppColorsV2.primary,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColorsV2.textOnPrimary,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => _buildImageFallback(imagePath),
+                      memCacheWidth: (MediaQuery.of(context).size.width * MediaQuery.of(context).devicePixelRatio).round(),
+                      memCacheHeight: (MediaQuery.of(context).size.height * MediaQuery.of(context).devicePixelRatio).round(),
+                    )
+                  : Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0.1, 0),
+                      errorBuilder: (_, __, ___) => _buildImageFallback(imagePath),
+                    ))
+            else
+              _buildImageFallback(imagePath),
+            Positioned(
+              bottom: 200.h,
+              left: 0,
+              right: 0,
+              child: Obx(() => _buildPaginationDots()),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -1,5 +1,7 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/ui_v2/navigation/app_router_v2.dart';
+import 'package:ustahub/app/ui_v2/config/ui_config.dart';
+import 'package:ustahub/app/ui_v2/screens/onboarding/onboarding_screen_v2.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -52,11 +54,19 @@ class _SplashScreenState extends State<SplashScreen> {
           } else {
             // User chose provider/consumer but didn't complete login, take them to login
             // String defaultRole = userMode ?? "consumer";
-            Get.offAll(() => OnboardingView());
+            if (UIConfig.useNewOnboarding) {
+              Get.offAll(() => OnboardingScreenV2());
+            } else {
+              Get.offAll(() => OnboardingView());
+            }
           }
         } else {
           // First time user, show onboarding
-          Get.offAll(() => OnboardingView());
+          if (UIConfig.useNewOnboarding) {
+            Get.offAll(() => OnboardingScreenV2());
+          } else {
+            Get.offAll(() => OnboardingView());
+          }
         }
       }
     });

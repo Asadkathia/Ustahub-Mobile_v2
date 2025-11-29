@@ -8,12 +8,20 @@ class LanguageScreenV2 extends StatelessWidget {
   LanguageScreenV2({super.key});
   final LanguageController controller = Get.put(LanguageController());
 
-  final List<Locale> supportedLocales = const [
-    Locale('en'),
-    Locale('ru'),
-    Locale('tk'),
-    Locale('uz'),
+  // All languages with flags and display names (ordered to match UI)
+  final List<Map<String, dynamic>> allLanguages = [
+    {'flag': '🇬🇧', 'name': 'English', 'locale': 'en', 'nativeName': 'English'},
+    {'flag': '🇷🇺', 'name': 'Русский', 'locale': 'ru', 'nativeName': 'Русский (Russian)'},
+    {'flag': '🇺🇿', 'name': 'O\'zbekcha', 'locale': 'uz', 'nativeName': 'O\'zbekcha (Uzbek)'},
+    {'flag': '🇰🇬', 'name': 'Кыргызча', 'locale': 'ky', 'nativeName': 'Кыргызча (Kyrgyz)'},
+    {'flag': '🇰🇿', 'name': 'Қазақша', 'locale': 'kk', 'nativeName': 'Қазақша (Kazakh)'},
+    {'flag': '🇵🇰', 'name': 'اردو', 'locale': 'ur', 'nativeName': 'اردو (Urdu)'},
+    {'flag': '🇸🇦', 'name': 'العربية', 'locale': 'ar', 'nativeName': 'العربية (Arabic)'},
+    {'flag': '🇹🇯', 'name': 'Тоҷикӣ', 'locale': 'tg', 'nativeName': 'Тоҷикӣ (Tajik)'},
   ];
+
+  // Available languages (all currently supported languages including Kyrgyz, Kazakh, Urdu, and Arabic)
+  final List<String> availableLocales = ['en', 'ru', 'uz', 'ky', 'kk', 'ur', 'ar'];
 
   @override
   Widget build(BuildContext context) {
@@ -22,56 +30,131 @@ class LanguageScreenV2 extends StatelessWidget {
       appBar: AppAppBarV2(
         title: AppLocalizations.of(context)!.languge,
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenPaddingHorizontal,
-        ),
-        child: Obx(() {
-          if (!controller.isLocaleLoaded.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Obx(() {
+        if (!controller.isLocaleLoaded.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return ListView.separated(
-            itemCount: supportedLocales.length,
-            separatorBuilder: (_, __) => Divider(color: AppColorsV2.borderLight),
-            itemBuilder: (context, index) {
-              final locale = supportedLocales[index];
-              final isSelected =
-                  controller.selectedLocale.value == locale.languageCode;
-              final displayName = _localeDisplayName(locale.languageCode);
+        // Separate available and upcoming languages
+        final availableLanguages = allLanguages
+            .where((lang) => availableLocales.contains(lang['locale']))
+            .toList();
+        
+        final upcomingLanguages = allLanguages
+            .where((lang) => !availableLocales.contains(lang['locale']))
+            .toList();
 
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  displayName,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(AppSpacing.screenPaddingHorizontal),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: AppSpacing.mdVertical),
+              // Available Languages Section
+              Text(
+                'Available Languages',
+                style: AppTextStyles.heading3.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: AppSpacing.mdVertical),
+              ...availableLanguages.map((lang) => _buildLanguageTile(
+                context: context,
+                lang: lang,
+                isSelected: controller.selectedLocale.value == lang['locale'],
+                isUpcoming: false,
+              )),
+              SizedBox(height: AppSpacing.xlVertical),
+              // Upcoming Languages Section
+              if (upcomingLanguages.isNotEmpty) ...[
+                Text(
+                  'Upcoming Languages',
+                  style: AppTextStyles.heading3.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColorsV2.textSecondary,
                   ),
                 ),
-                trailing: isSelected
-                    ? Icon(Icons.check_circle, color: AppColorsV2.primary)
-                    : Icon(Icons.circle_outlined, color: AppColorsV2.borderLight),
-                onTap: () => controller.selectLanguage(locale.languageCode),
-              );
-            },
-          );
-        }),
-      ),
+                SizedBox(height: AppSpacing.mdVertical),
+                ...upcomingLanguages.map((lang) => _buildLanguageTile(
+                  context: context,
+                  lang: lang,
+                  isSelected: false,
+                  isUpcoming: true,
+                )),
+              ],
+              SizedBox(height: AppSpacing.xlVertical),
+            ],
+          ),
+        );
+      }),
     );
   }
 
-  String _localeDisplayName(String code) {
-    switch (code) {
-      case 'ru':
-        return 'Русский';
-      case 'tk':
-        return 'Türkmençe';
-      case 'uz':
-        return 'Oʻzbekcha';
-      case 'en':
-      default:
-        return 'English';
-    }
+  Widget _buildLanguageTile({
+    required BuildContext context,
+    required Map<String, dynamic> lang,
+    required bool isSelected,
+    required bool isUpcoming,
+  }) {
+    return GestureDetector(
+      onTap: isUpcoming ? null : () => controller.selectLanguage(lang['locale']),
+      child: Container(
+        margin: EdgeInsets.only(bottom: AppSpacing.smVertical),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.mdVertical,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColorsV2.primaryLight.withOpacity(0.1)
+              : AppColorsV2.background,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+          border: Border.all(
+            color: isSelected
+                ? AppColorsV2.primary
+                : AppColorsV2.borderLight,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Flag
+            Text(
+              lang['flag'] ?? '🌐',
+              style: TextStyle(fontSize: 28.sp),
+            ),
+            SizedBox(width: AppSpacing.md),
+            // Language Name
+            Expanded(
+              child: Text(
+                lang['nativeName'] ?? lang['name'] ?? '',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isUpcoming
+                      ? AppColorsV2.textSecondary
+                      : AppColorsV2.textPrimary,
+                ),
+              ),
+            ),
+            // Checkmark or Coming Soon
+            if (isSelected && !isUpcoming)
+              Icon(
+                Icons.check_circle,
+                color: AppColorsV2.primary,
+                size: 24.sp,
+              )
+            else if (isUpcoming)
+              Text(
+                'Coming soon',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColorsV2.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

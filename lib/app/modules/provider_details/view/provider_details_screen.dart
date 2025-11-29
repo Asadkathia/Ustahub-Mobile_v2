@@ -2,6 +2,8 @@ import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/manage_address/controller/manage_address_controller.dart';
 import 'package:ustahub/app/modules/provider_details/model_class/provider_details_model_class.dart';
 import 'package:ustahub/components/service_radio_buttons.dart';
+import 'package:ustahub/app/ui_v2/config/ui_config.dart';
+import 'package:ustahub/app/ui_v2/screens/onboarding/onboarding_screen_v2.dart';
 
 class ProviderDetailsScreen extends StatefulWidget {
   final String id;
@@ -82,7 +84,11 @@ class _ProviderDetailsScreenState extends State<ProviderDetailsScreen> {
           if (!mounted) return;
           if (!isLoggedIn) {
               CustomToast.error("Please login to continue");
-            Get.to(() => OnboardingView());
+            if (UIConfig.useNewOnboarding) {
+              Get.to(() => OnboardingScreenV2());
+            } else {
+              Get.to(() => OnboardingView());
+            }
             return;
           }
 

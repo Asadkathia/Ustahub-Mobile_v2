@@ -38,6 +38,11 @@ class Sharedprefhelper {
     pref.clear();
   }
 
+  static Future<void> removeSharedPrefHelper(String key) async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.remove(key);
+  }
+
   // Supabase session helpers
   static Future<void> saveSupabaseSession() async {
     try {

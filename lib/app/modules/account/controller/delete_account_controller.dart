@@ -1,6 +1,8 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/account/repository/account_respository.dart';
 import 'package:ustahub/components/custom_toast.dart';
+import 'package:ustahub/app/ui_v2/config/ui_config.dart';
+import 'package:ustahub/app/ui_v2/screens/onboarding/onboarding_screen_v2.dart';
 
 class DeleteAccountController extends GetxController {
   final AccountRespository _repository = AccountRespository();
@@ -25,8 +27,12 @@ class DeleteAccountController extends GetxController {
         // Get user role for navigation
         String? role = await Sharedprefhelper.getRole() ?? 'consumer';
 
-        // Navigate to login screen
-        Get.offAll(() => OnboardingView());
+        // Navigate to onboarding screen (use new UI if enabled)
+        if (UIConfig.useNewOnboarding) {
+          Get.offAll(() => OnboardingScreenV2());
+        } else {
+          Get.offAll(() => OnboardingView());
+        }
       } else {
         CustomToast.error(response['body']['message'] ?? 'Failed to delete account');
       }

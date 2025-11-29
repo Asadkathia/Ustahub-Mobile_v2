@@ -6,6 +6,8 @@ import 'package:ustahub/app/modules/provider_bookings/view/provider_booking_view
 import 'package:ustahub/app/modules/Auth/login/view/login_view.dart';
 import 'package:ustahub/app/modules/onboarding/view/onboarding_view.dart';
 import 'package:ustahub/app/modules/common_controller.dart/provider_controller.dart';
+import 'package:ustahub/app/ui_v2/config/ui_config.dart';
+import 'package:ustahub/app/ui_v2/screens/onboarding/onboarding_screen_v2.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -214,7 +216,11 @@ class _NavBarState extends State<NavBar> {
               BuildBasicButton(
                 title: "Login Now",
                 onPressed: () {
-                  Get.offAll(() => OnboardingView());
+                  if (UIConfig.useNewOnboarding) {
+                    Get.offAll(() => OnboardingScreenV2());
+                  } else {
+                    Get.offAll(() => OnboardingView());
+                  }
                 },
                 buttonColor: AppColors.green,
                 textStyle: GoogleFonts.ubuntu(
@@ -296,7 +302,11 @@ class _NavBarState extends State<NavBar> {
             SizedBox(height: 20.h),
             TextButton(
               onPressed: () {
-                Get.offAll(() => OnboardingView());
+                if (UIConfig.useNewOnboarding) {
+                  Get.offAll(() => OnboardingScreenV2());
+                } else {
+                  Get.offAll(() => OnboardingView());
+                }
               },
               child: Text(
                 "Back to Onboarding",

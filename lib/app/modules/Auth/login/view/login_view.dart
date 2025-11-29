@@ -186,25 +186,50 @@ class LoginView extends StatelessWidget {
                               ),
                             ),
                   ),
-                  70.ph,
-                  // CustomDottedLine(),
-                  // 80.ph,
-                  // BuildBasicButton(
-                  //   buttonColor: Colors.white,
-                  //   onPressed: () {},
-                  //   title: AppLocalizations.of(context)!.loginGoogle,
-                  //   textStyle: GoogleFonts.ubuntu(
-                  //     color: Colors.black,
-                  //     fontSize: 16.sp,
-                  //     fontWeight: FontWeight.w500,
-                  //   ),
-                  //   icon: SvgPicture.asset(
-                  //     height: 24.h,
-                  //     width: 24.w,
-                  //     AppVectors.svgGoogle,
-                  //   ),
-                  // ),
-                  // 40.ph,
+                  30.ph,
+                  // Divider with "OR" text
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppColors.grey.withOpacity(0.3))),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          "OR",
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14.sp,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: AppColors.grey.withOpacity(0.3))),
+                    ],
+                  ),
+                  30.ph,
+                  // Google Sign-In Button
+                  Obx(
+                    () => BuildBasicButton(
+                      buttonColor: Colors.white,
+                      onPressed: logic.isGoogleSigningIn.value
+                          ? () {} // Disable when loading
+                          : () {
+                              logic.signInWithGoogle(role);
+                            },
+                      title: logic.isGoogleSigningIn.value
+                          ? "Signing in..."
+                          : AppLocalizations.of(context)!.loginGoogle,
+                      textStyle: GoogleFonts.ubuntu(
+                        color: Colors.black,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      icon: SvgPicture.asset(
+                        height: 24.h,
+                        width: 24.w,
+                        AppVectors.svgGoogle,
+                      ),
+                    ),
+                  ),
+                  20.ph,
                   // Platform.isIOS
                   //     ? BuildBasicButton(
                   //       buttonColor: Colors.white,

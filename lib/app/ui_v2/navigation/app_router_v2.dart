@@ -4,6 +4,7 @@ import '../config/ui_config.dart';
 import '../screens/splash/splash_screen_v2.dart';
 import '../screens/onboarding/onboarding_screen_v2.dart';
 import '../screens/auth/login/login_screen_v2.dart';
+import '../screens/auth/signup/signup_screen_v2.dart';
 import '../screens/auth/otp/otp_screen_v2.dart';
 import '../screens/navigation/nav_bar_v2.dart';
 
@@ -28,6 +29,10 @@ class AppRouterV2 {
 
   static void toLoginV2({required String role}) {
     Get.to(() => LoginScreenV2(role: role));
+  }
+
+  static void toSignUpV2({required String role}) {
+    Get.to(() => SignUpScreenV2(initialRole: role));
   }
 
   static void toOtpV2({required String role, required String email}) {
