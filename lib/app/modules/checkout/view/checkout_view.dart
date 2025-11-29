@@ -1,6 +1,7 @@
 import 'package:ustahub/app/modules/booking_summary/view/booking_summary_view.dart';
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/manage_address/controller/manage_address_controller.dart';
+import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 
 class CheckoutModalBottomSheet extends StatefulWidget {
   final String providerId, serviceId;
@@ -18,11 +19,20 @@ class CheckoutModalBottomSheet extends StatefulWidget {
 class _CheckoutModalBottomSheetState extends State<CheckoutModalBottomSheet> {
   final controller = Get.put(CheckoutController());
 
-  final addressController = Get.find<ManageAddressController>();
+  // Use Get.put with permanent: true to ensure controller is always available
+  // This prevents "not found" errors when the checkout modal is opened
+  late final ManageAddressController addressController;
 
   @override
   void initState() {
     super.initState();
+    // Initialize ManageAddressController if not already registered
+    if (Get.isRegistered<ManageAddressController>()) {
+      addressController = Get.find<ManageAddressController>();
+    } else {
+      addressController = Get.put(ManageAddressController(), permanent: true);
+    }
+    
     // Reset time slots and selected time for new booking
     controller.timeSlotsLists.clear();
     controller.selectedTime.value = "00:00";
@@ -353,19 +363,36 @@ class _CheckoutModalBottomSheetState extends State<CheckoutModalBottomSheet> {
                       CustomToast.error("Address ID is missing. Please select a valid address.");
                       return;
                     }
-                    Get.to(
-                      BookingSummaryView(
-                        note: controller.noteController.value.text,
-                        addressId: addressId,
-                        bookingDate: controller.selectedYmdDate.value,
-                        bookingTime: controller.selectedTime.value,
-                        serviceId: widget.serviceId,
-                        serviceName: controller.selectedServiceName.value,
-                        fullAddress:
-                            "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
-                        providerId: widget.providerId,
-                      ),
-                    );
+                    // Use V2 booking summary screen
+                    if (UIConfig.useNewUI) {
+                      Get.to(
+                        BookingSummaryScreenV2(
+                          note: controller.noteController.value.text,
+                          addressId: addressId,
+                          bookingDate: controller.selectedYmdDate.value,
+                          bookingTime: controller.selectedTime.value,
+                          serviceId: widget.serviceId,
+                          serviceName: controller.selectedServiceName.value,
+                          fullAddress:
+                              "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
+                          providerId: widget.providerId,
+                        ),
+                      );
+                    } else {
+                      Get.to(
+                        BookingSummaryView(
+                          note: controller.noteController.value.text,
+                          addressId: addressId,
+                          bookingDate: controller.selectedYmdDate.value,
+                          bookingTime: controller.selectedTime.value,
+                          serviceId: widget.serviceId,
+                          serviceName: controller.selectedServiceName.value,
+                          fullAddress:
+                              "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
+                          providerId: widget.providerId,
+                        ),
+                      );
+                    }
                   }
                 },
                 title: AppLocalizations.of(context)!.proceedToCheckout,

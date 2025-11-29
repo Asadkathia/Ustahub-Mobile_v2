@@ -1,5 +1,6 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/common_model_class/ProviderListModelClass.dart';
+import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 
 class ProvidersListView extends StatelessWidget {
   final List<ProvidersListModelClass> providers;
@@ -69,7 +70,12 @@ class ProvidersListView extends StatelessWidget {
                   },
                   isFavorite: data.isFavorite ?? false,
                   onTap: () {
-                    Get.to(() => ProviderDetailsScreen(id: data.id.toString()));
+                    // Use V2 provider details screen when accessed from V2 UI
+                    if (UIConfig.useNewUI) {
+                      Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
+                    } else {
+                      Get.to(() => ProviderDetailsScreen(id: data.id.toString()));
+                    }
                   },
                   starValue: data.averageRating ?? 0.0,
                   name: data.name ?? "",

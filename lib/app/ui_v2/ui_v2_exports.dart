@@ -46,6 +46,7 @@ export 'screens/search/search_screen_v2.dart';
 export 'screens/chat/chat_screen_v2.dart';
 export 'screens/bookings/booking_screen_v2.dart';
 export 'screens/bookings/provider_booking_screen_v2.dart';
+export 'screens/booking/booking_summary_screen_v2.dart';
 export 'screens/calendar/provider_calendar_screen_v2.dart';
 export 'screens/guest/login_required_screen_v2.dart';
 export 'screens/settings/language_screen_v2.dart';

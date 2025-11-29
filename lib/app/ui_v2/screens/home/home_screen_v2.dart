@@ -646,11 +646,8 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
       rating: double.tryParse(data.averageRating?.toString() ?? '0') ?? 0,
       location: data.bio ?? '',
       onTap: () {
-        if (UIConfig.useNewUI) {
-          Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
-        } else {
-          Get.to(() => ProviderDetailsScreen(id: data.id.toString()));
-        }
+        // Always use V2 provider details screen for consumer flow
+        Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
       },
     );
   }

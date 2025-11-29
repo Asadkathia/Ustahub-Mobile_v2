@@ -136,7 +136,10 @@ class ManageAddressView extends StatelessWidget {
 // Show Modal Bottom Sheet for Adding Address
 
 void _showAddressBottomSheet(BuildContext context, String? id) {
-  final controller = Get.find<ManageAddressController>();
+  // Safely get or create ManageAddressController
+  final controller = Get.isRegistered<ManageAddressController>()
+      ? Get.find<ManageAddressController>()
+      : Get.put(ManageAddressController());
   final formKey = GlobalKey<FormState>();
 
   showModalBottomSheet(

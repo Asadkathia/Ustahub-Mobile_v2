@@ -7,6 +7,8 @@ import '../screens/auth/login/login_screen_v2.dart';
 import '../screens/auth/signup/signup_screen_v2.dart';
 import '../screens/auth/otp/otp_screen_v2.dart';
 import '../screens/navigation/nav_bar_v2.dart';
+import '../screens/provider/provider_details_screen_v2.dart';
+import '../screens/booking/booking_summary_screen_v2.dart';
 
 class AppRouterV2 {
   static Widget _navBarWidget({
@@ -72,6 +74,36 @@ class AppRouterV2 {
 
   static Widget getNavBar({required String role, int? initialIndex}) {
     return _navBarWidget(role: role, initialIndex: initialIndex ?? 0);
+  }
+
+  // Provider Details Navigation
+  static void toProviderDetailsV2({required String providerId}) {
+    Get.to(() => ProviderDetailsScreenV2(id: providerId));
+  }
+
+  // Booking Summary Navigation
+  static void toBookingSummaryV2({
+    required String providerId,
+    required String serviceId,
+    required String serviceName,
+    required String addressId,
+    required String bookingDate,
+    required String bookingTime,
+    required String fullAddress,
+    required String note,
+  }) {
+    Get.to(
+      () => BookingSummaryScreenV2(
+        providerId: providerId,
+        serviceId: serviceId,
+        serviceName: serviceName,
+        addressId: addressId,
+        bookingDate: bookingDate,
+        bookingTime: bookingTime,
+        fullAddress: fullAddress,
+        note: note,
+      ),
+    );
   }
 }
 

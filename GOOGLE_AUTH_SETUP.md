@@ -68,7 +68,7 @@ The app now supports Google sign-in alongside the existing OTP-based email authe
   <dict>
     <key>CFBundleTypeRole</key>
     <string>Editor</string>
-    <key>CFBundleURLSchemes</key>
+    <key>CFBundleURLSchemes</key>   `
     <array>
       <string>io.supabase.ustahub</string>
     </array>
