@@ -2,6 +2,7 @@
 
 # Xcode Cloud post-clone script for Flutter iOS builds
 # This script runs after the repository is cloned and before the build starts
+# Last updated: 2025-11-30
 
 set -e
 
