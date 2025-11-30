@@ -47,13 +47,18 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   void initState() {
     super.initState();
     // Initialize countdown controller with GetX
-    countdownController = Get.put(CountdownController());
+    // Use Get.findOrPut to avoid creating multiple instances if already exists
+    // Since this is a global limited offer countdown, we use a singleton
+    countdownController = Get.findOrPut(() => CountdownController(), tag: 'countdown');
     controller.providerController.initializeLocation();
   }
 
   @override
   void dispose() {
-    // CountdownController will handle its own cleanup via onClose
+    // Note: CountdownController is a singleton for the global limited offer
+    // It will be cleaned up when the app closes or explicitly deleted
+    // We don't delete it here to maintain the countdown across navigation
+    // The timer is properly managed in the controller's onClose method
     super.dispose();
   }
 

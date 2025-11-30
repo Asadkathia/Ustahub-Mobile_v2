@@ -14,16 +14,23 @@ class CountdownController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    startCountdown();
+    // Only start countdown if not already running
+    if (_countdownTimer == null || !_countdownTimer!.isActive) {
+      startCountdown();
+    }
   }
 
   @override
   void onClose() {
     _countdownTimer?.cancel();
+    _countdownTimer = null;
     super.onClose();
   }
 
   void startCountdown() {
+    // Cancel existing timer if any
+    _countdownTimer?.cancel();
+    
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (seconds.value > 0) {
         seconds.value--;
@@ -41,19 +48,32 @@ class CountdownController extends GetxController {
         seconds.value = 59;
       } else {
         timer.cancel();
+        _countdownTimer = null;
       }
     });
   }
 
   void reset() {
+    // Stop existing timer
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+    
+    // Reset values
     days.value = 7;
     hours.value = 12;
     minutes.value = 30;
     seconds.value = 20;
+    
+    // Restart the countdown
+    startCountdown();
   }
 
   void stop() {
     _countdownTimer?.cancel();
+    _countdownTimer = null;
   }
+  
+  /// Check if countdown is currently running
+  bool get isRunning => _countdownTimer != null && _countdownTimer!.isActive;
 }
 
