@@ -47,9 +47,13 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   void initState() {
     super.initState();
     // Initialize countdown controller with GetX
-    // Use Get.findOrPut to avoid creating multiple instances if already exists
+    // Use Get.put with tag to create singleton instance
     // Since this is a global limited offer countdown, we use a singleton
-    countdownController = Get.findOrPut(() => CountdownController(), tag: 'countdown');
+    if (Get.isRegistered<CountdownController>(tag: 'countdown')) {
+      countdownController = Get.find<CountdownController>(tag: 'countdown');
+    } else {
+      countdownController = Get.put(CountdownController(), tag: 'countdown');
+    }
     controller.providerController.initializeLocation();
   }
 

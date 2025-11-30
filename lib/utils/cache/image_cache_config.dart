@@ -1,10 +1,17 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
+/// Custom ImageCacheManager class that extends CacheManager with ImageCacheManager mixin
+/// This enables disk cache resizing (maxWidthDiskCache/maxHeightDiskCache) support
+/// ImageCacheManager is a mixin from flutter_cache_manager that provides image-specific caching
+class CustomImageCacheManager extends CacheManager with ImageCacheManager {
+  CustomImageCacheManager(Config config) : super(config);
+}
+
 /// Global image cache manager for optimized image loading
-/// Uses ImageCacheManager for better image-specific optimizations
+/// Uses ImageCacheManager mixin for better image-specific optimizations
 /// Configures cache settings to improve performance and reduce memory/disk usage
-final customImageCacheManager = ImageCacheManager(
+/// Supports disk cache resizing for efficient storage (maxWidthDiskCache/maxHeightDiskCache)
+final customImageCacheManager = CustomImageCacheManager(
   Config(
     'ustahub_images',
     stalePeriod: const Duration(days: 7),
@@ -13,6 +20,8 @@ final customImageCacheManager = ImageCacheManager(
 );
 
 /// Helper function to get optimized image cache settings
-/// Returns ImageCacheManager which supports disk cache resizing
-ImageCacheManager getImageCacheManager() => customImageCacheManager;
+/// Returns CustomImageCacheManager which implements ImageCacheManager mixin
+/// This is required for maxWidthDiskCache and maxHeightDiskCache parameters in CachedNetworkImage
+/// ImageCacheManager provides the getImageFile method that handles image resizing on disk
+CustomImageCacheManager getImageCacheManager() => customImageCacheManager;
 
