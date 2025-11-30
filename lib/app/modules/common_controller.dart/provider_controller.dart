@@ -9,6 +9,13 @@ class ProviderController extends GetxController {
   RxList<ProvidersListModelClass> providersList =
       <ProvidersListModelClass>[].obs;
 
+  /// Get top N providers (optimized for homepage)
+  /// Pre-computes reversed list to avoid repeated operations in UI
+  List<ProvidersListModelClass> getTopProviders(int count) {
+    final reversed = providersList.reversed.toList();
+    return reversed.take(count).toList();
+  }
+
   late LocationController locationController;
   bool _locationInitialized = false;
 
@@ -32,17 +39,14 @@ class ProviderController extends GetxController {
     try {
       await locationController.getCurrentLocationAndAddress();
       _locationInitialized = true;
-      print("📍 Location initialized: ${locationController.latitude.value}, ${locationController.longitude.value}");
     } catch (e) {
       _locationInitialized = true; // Mark as initialized even if failed
-      print("⚠️ Location initialization error (will continue without location): $e");
     }
   }
 
   /// Ensure location is initialized before fetching providers
   Future<void> _ensureLocationInitialized() async {
     if (!_locationInitialized) {
-      print("⏳ Waiting for location initialization...");
       await initializeLocation();
     }
   }
@@ -50,7 +54,6 @@ class ProviderController extends GetxController {
   final _api = SupabaseApiServices();
   
   Future<void> getProvider({String? serviceId, String? top}) async {
-    print("[PROVIDERS] Fetching providers...");
     // Ensure location is initialized before fetching
     await _ensureLocationInitialized();
     isLoading.value = true;
@@ -67,12 +70,9 @@ class ProviderController extends GetxController {
         final data = response['body']['data'] as List;
         providersList.value =
             data.map((e) => ProvidersListModelClass.fromJson(e)).toList();
-        print("[PROVIDERS] ✅ Loaded ${providersList.length} providers");
-      } else {
-        print("[PROVIDERS] ❌ Failed: ${response['body']}");
       }
     } catch (e) {
-      print("[PROVIDERS] ❌ Error: $e");
+      // Error handling - could use logger here
     } finally {
       isLoading.value = false;
     }
@@ -81,12 +81,9 @@ class ProviderController extends GetxController {
   /// Refresh providers with updated location
   Future<void> refreshProvidersWithLocation({String? serviceId}) async {
     try {
-      print("🔄 Refreshing location and providers...");
       await locationController.getCurrentLocationAndAddress();
-      print("📍 Location updated: ${locationController.latitude.value}, ${locationController.longitude.value}");
       await getProvider(serviceId: serviceId);
     } catch (e) {
-      print("⚠️ Location refresh error: $e");
       // Still try to get providers even if location fails
       await getProvider(serviceId: serviceId);
     }
@@ -94,7 +91,6 @@ class ProviderController extends GetxController {
 
   // ✅ Search providers
   Future<void> searchProviders({required String keyword}) async {
-    print("[PROVIDERS] Searching with keyword: $keyword");
     isLoading.value = true;
 
     try {
@@ -107,12 +103,9 @@ class ProviderController extends GetxController {
         final data = response['body']['data'] as List;
         providersList.value =
             data.map((e) => ProvidersListModelClass.fromJson(e)).toList();
-        print("[PROVIDERS] ✅ Found ${providersList.length} providers");
-      } else {
-        print("[PROVIDERS] ❌ Search failed: ${response['body']}");
       }
     } catch (e) {
-      print("[PROVIDERS] ❌ Search error: $e");
+      // Error handling
     } finally {
       isLoading.value = false;
     }

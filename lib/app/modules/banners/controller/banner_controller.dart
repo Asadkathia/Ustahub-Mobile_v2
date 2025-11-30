@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/location/controller/location_controller.dart';
 
@@ -79,12 +80,27 @@ class BannerController extends GetxController {
                   BannerModelClass.fromJson(json as Map<String, dynamic>),
             )
             .toList();
-        print('[BANNER] ✅ Loaded ${bannersList.length} banners');
+        
+        // Log banner details for debugging
+        if (kDebugMode) {
+          print('[BANNER] ✅ Loaded ${bannersList.length} banners');
+          for (var i = 0; i < bannersList.length; i++) {
+            final banner = bannersList[i];
+            print('[BANNER] Banner $i: id=${banner.id}, image=${banner.image}');
+            if (banner.image == null || banner.image!.isEmpty) {
+              print('[BANNER] ⚠️ Banner $i has empty or null image URL!');
+            }
+          }
+        }
       } else {
-        print('Failed to load banners: ${response['body']}');
+        if (kDebugMode) {
+          print('[BANNER] ❌ Failed to load banners: ${response['body']}');
+        }
       }
     } catch (e) {
-      print('Error loading banners: $e');
+      if (kDebugMode) {
+        print('[BANNER] ❌ Error loading banners: $e');
+      }
     } finally {
       isLoading.value = false;
     }

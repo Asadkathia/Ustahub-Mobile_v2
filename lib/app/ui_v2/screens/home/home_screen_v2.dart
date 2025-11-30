@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,8 @@ import 'package:ustahub/app/ui_v2/design_system/colors/app_colors_v2.dart';
 import 'package:ustahub/app/ui_v2/design_system/typography/app_text_styles.dart';
 import 'package:ustahub/app/ui_v2/design_system/spacing/app_spacing.dart';
 import 'package:ustahub/app/modules/consumer_homepage/controller/consumer_homepage_controller.dart';
+import 'package:ustahub/app/modules/countdown/controller/countdown_controller.dart';
+import 'package:ustahub/utils/cache/image_cache_config.dart';
 import '../search/search_screen_v2.dart';
 import '../../components/cards/recommendation_card_v2.dart';
 import '../provider/provider_details_screen_v2.dart';
@@ -37,56 +40,21 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   );
   final BannerController bannerController = Get.put(BannerController());
   final CarouselSliderController carouselController = CarouselSliderController();
+  late final CountdownController countdownController;
   int currentBannerIndex = 0;
-  
-  // Countdown timer state
-  int days = 7;
-  int hours = 12;
-  int minutes = 30;
-  int seconds = 20;
-  Timer? countdownTimer;
 
   @override
   void initState() {
     super.initState();
+    // Initialize countdown controller with GetX
+    countdownController = Get.put(CountdownController());
     controller.providerController.initializeLocation();
-    startCountdown();
   }
 
   @override
   void dispose() {
-    countdownTimer?.cancel();
+    // CountdownController will handle its own cleanup via onClose
     super.dispose();
-  }
-
-  void startCountdown() {
-    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (seconds > 0) {
-        setState(() {
-          seconds--;
-        });
-      } else if (minutes > 0) {
-        setState(() {
-          minutes--;
-          seconds = 59;
-        });
-      } else if (hours > 0) {
-        setState(() {
-          hours--;
-          minutes = 59;
-          seconds = 59;
-        });
-      } else if (days > 0) {
-        setState(() {
-          days--;
-          hours = 23;
-          minutes = 59;
-          seconds = 59;
-        });
-      } else {
-        timer.cancel();
-      }
-    });
   }
 
   @override
@@ -226,8 +194,46 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         );
       }
 
+      // Filter out banners with invalid image URLs
+      final validBanners = banners.where((banner) {
+        final imageUrl = banner.image;
+        return imageUrl != null && 
+               imageUrl.isNotEmpty && 
+               Uri.tryParse(imageUrl) != null;
+      }).toList();
+
+      if (validBanners.isEmpty) {
+        if (kDebugMode) {
+          print('[BANNER] ⚠️ No valid banner images found. Total banners: ${banners.length}');
+          for (var banner in banners) {
+            print('[BANNER] Invalid banner: image=${banner.image}');
+          }
+        }
+        return Container(
+          height: 200.h,
+          color: AppColorsV2.surface,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.image_not_supported,
+                  size: 48.w,
+                  color: AppColorsV2.textTertiary,
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Banner images unavailable',
+                  style: AppTextStyles.bodyMediumSecondary,
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       // Ensure current index is within range
-      final totalBanners = banners.length;
+      final totalBanners = validBanners.length;
       if (currentBannerIndex >= totalBanners) {
         currentBannerIndex = 0;
       }
@@ -236,8 +242,13 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         children: [
           CarouselSlider(
             carouselController: carouselController,
-            items: banners.map((banner) {
+            items: validBanners.map((banner) {
               final imageUrl = banner.image ?? '';
+              
+              if (kDebugMode) {
+                print('[BANNER] Loading image: $imageUrl');
+              }
+              
               return Container(
                 margin: EdgeInsets.zero,
                 child: ClipRRect(
@@ -247,6 +258,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                     children: [
                       CachedNetworkImage(
                         imageUrl: imageUrl,
+                        cacheManager: getImageCacheManager(),
                         fit: BoxFit.cover,
                         alignment: const Alignment(0.1, 0),
                         placeholder: (context, url) => Container(
@@ -259,18 +271,41 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                           ),
                         ),
                         errorWidget: (context, url, error) {
-                          debugPrint('Error loading banner image: $imageUrl');
+                          if (kDebugMode) {
+                            print('[BANNER] ❌ Error loading image: $url');
+                            print('[BANNER] Error: $error');
+                          }
                           return Container(
                             color: AppColorsV2.surface,
-                            child: Icon(
-                              Icons.image_not_supported,
-                              size: AppSpacing.iconXLarge,
-                              color: AppColorsV2.textTertiary,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported,
+                                  size: AppSpacing.iconXLarge,
+                                  color: AppColorsV2.textTertiary,
+                                ),
+                                if (kDebugMode) ...[
+                                  SizedBox(height: 8.h),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                    child: Text(
+                                      'Failed to load',
+                                      style: AppTextStyles.captionSmall.copyWith(
+                                        color: AppColorsV2.textTertiary,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           );
                         },
                         memCacheWidth: (400 * MediaQuery.of(context).devicePixelRatio).round(),
                         memCacheHeight: (200 * MediaQuery.of(context).devicePixelRatio).round(),
+                        maxWidthDiskCache: 800,
+                        maxHeightDiskCache: 600,
                       ),
                       Positioned(
                         bottom: AppSpacing.mdVertical,
@@ -317,7 +352,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   }
 
   Widget _buildLimitedOfferSection() {
-    return Container(
+    return Obx(() => Container(
       margin: EdgeInsets.only(
         left: 0,
         right: 0,
@@ -366,13 +401,25 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildCountdownSegment(days.toString().padLeft(2, '0'), 'days'),
+                    _buildCountdownSegment(
+                      countdownController.days.value.toString().padLeft(2, '0'),
+                      'days',
+                    ),
                     SizedBox(width: 12.w),
-                    _buildCountdownSegment(hours.toString().padLeft(2, '0'), 'hours'),
+                    _buildCountdownSegment(
+                      countdownController.hours.value.toString().padLeft(2, '0'),
+                      'hours',
+                    ),
                     SizedBox(width: 12.w),
-                    _buildCountdownSegment(minutes.toString().padLeft(2, '0'), 'min'),
+                    _buildCountdownSegment(
+                      countdownController.minutes.value.toString().padLeft(2, '0'),
+                      'min',
+                    ),
                     SizedBox(width: 12.w),
-                    _buildCountdownSegment(seconds.toString().padLeft(2, '0'), 'sec'),
+                    _buildCountdownSegment(
+                      countdownController.seconds.value.toString().padLeft(2, '0'),
+                      'sec',
+                    ),
                   ],
                 ),
               ],
@@ -380,7 +427,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildCountdownSegment(String value, String label) {
@@ -447,49 +494,56 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
           ),
           SizedBox(height: AppSpacing.mdVertical),
           Obx(
-            () => controller.servicesController.isLoading.value
-                ? GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: AppSpacing.sm,
-                      mainAxisSpacing: AppSpacing.xs,
-                      childAspectRatio: 0.7,
-                    ),
-                    itemCount: 4,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: AppColorsV2.surface,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                        ),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColorsV2.primary,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: AppSpacing.sm,
-                      mainAxisSpacing: AppSpacing.xs,
-                      childAspectRatio: 0.7,
-                    ),
-                    itemCount: controller.servicesController.serviceCategories.length >= 4
-                        ? 4
-                        : controller.servicesController.serviceCategories.length,
-                    itemBuilder: (context, index) {
-                      final service = controller.servicesController.serviceCategories[index];
-                      return _buildServiceCard(service);
-                    },
+            () {
+              if (controller.servicesController.isLoading.value) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.xs,
+                    childAspectRatio: 0.7,
                   ),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: AppColorsV2.surface,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColorsV2.primary,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+
+              final services = controller.servicesController.serviceCategories;
+              final itemCount = services.length >= 4 ? 4 : services.length;
+              
+              // Replace GridView with Wrap to avoid shrinkWrap performance issues
+              return Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: List.generate(
+                  itemCount,
+                  (index) {
+                    final service = services[index];
+                    return SizedBox(
+                      width: (MediaQuery.of(context).size.width - 
+                              AppSpacing.screenPaddingHorizontal * 2 - 
+                              AppSpacing.sm * 3) / 4,
+                      child: _buildServiceCard(service),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -499,54 +553,56 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   Widget _buildServiceCard(ServicesModelClass service) {
     final config = ServiceIconHelper.getConfig(service.name);
     
-    return GestureDetector(
-      onTap: () {
-        Get.to(
-          () => ProvidersListView(
-            providers: controller.providerController.providersList,
-            serviceName: service.name!,
-            serviceId: service.id.toString(),
-          ),
-        );
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cardWidth = constraints.maxWidth;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Container(
-                width: cardWidth * 0.85,
-                height: cardWidth * 0.85,
-                decoration: BoxDecoration(
-                  color: config.backgroundColor,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                ),
-                child: Icon(
-                  config.icon,
-                  color: config.iconColor,
-                  size: cardWidth * 0.4,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              SizedBox(
-                width: cardWidth,
-                child: Text(
-                  service.name ?? '',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 9.sp,
-                    height: 1.1,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: () {
+          Get.to(
+            () => ProvidersListView(
+              providers: controller.providerController.providersList,
+              serviceName: service.name!,
+              serviceId: service.id.toString(),
+            ),
           );
         },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = constraints.maxWidth;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  width: cardWidth * 0.85,
+                  height: cardWidth * 0.85,
+                  decoration: BoxDecoration(
+                    color: config.backgroundColor,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                  ),
+                  child: Icon(
+                    config.icon,
+                    color: config.iconColor,
+                    size: cardWidth * 0.4,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                SizedBox(
+                  width: cardWidth,
+                  child: Text(
+                    service.name ?? '',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 9.sp,
+                      height: 1.1,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -581,47 +637,47 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
           ),
           SizedBox(height: AppSpacing.mdVertical),
           Obx(
-            () => controller.providerController.isLoading.value
-                ? ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        height: 120.h,
-                        margin: EdgeInsets.only(bottom: AppSpacing.mdVertical),
-                        decoration: BoxDecoration(
-                          color: AppColorsV2.surface,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+            () {
+              if (controller.providerController.isLoading.value) {
+                return Column(
+                  children: List.generate(
+                    3,
+                    (index) => Container(
+                      height: 120.h,
+                      margin: EdgeInsets.only(bottom: AppSpacing.mdVertical),
+                      decoration: BoxDecoration(
+                        color: AppColorsV2.surface,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColorsV2.primary,
                         ),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColorsV2.primary,
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: controller.providerController.providersList.length >= 5
-                        ? 5
-                        : controller.providerController.providersList.length,
-                    itemBuilder: (context, index) {
-                      final data = controller.providerController.providersList
-                          .reversed
-                          .toList()[index];
-                      final servicesString = (data.services ?? [])
-                          .map((s) => s.name ?? '')
-                          .where((name) => name.isNotEmpty)
-                          .join(', ');
-                      return _buildRecommendedCard(
-                        data: data,
-                        servicesString: servicesString,
-                      );
-                    },
+                      ),
+                    ),
                   ),
+                );
+              }
+
+              // Use pre-computed top providers instead of reversed list in itemBuilder
+              final topProviders = controller.providerController.getTopProviders(5);
+              
+              // Replace ListView.builder with Column to avoid shrinkWrap performance issues
+              return Column(
+                children: topProviders.map((data) {
+                  final servicesString = (data.services ?? [])
+                      .map((s) => s.name ?? '')
+                      .where((name) => name.isNotEmpty)
+                      .join(', ');
+                  return RepaintBoundary(
+                    child: _buildRecommendedCard(
+                      data: data,
+                      servicesString: servicesString,
+                    ),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
@@ -646,8 +702,11 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
       rating: double.tryParse(data.averageRating?.toString() ?? '0') ?? 0,
       location: data.bio ?? '',
       onTap: () {
-        // Always use V2 provider details screen for consumer flow
-        Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
+        if (UIConfig.useNewUI) {
+          Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
+        } else {
+          Get.to(() => ProviderDetailsScreen(id: data.id.toString()));
+        }
       },
     );
   }

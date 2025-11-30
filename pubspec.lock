@@ -1186,14 +1186,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.10.1"
-  turkmen_localization_support:
-    dependency: "direct main"
-    description:
-      name: turkmen_localization_support
-      sha256: ac3f7b09dec0a7b7083529d95ce7c6a03d6c1d4efa47d48b4c0d37bc749f43bc
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.13"
   typed_data:
     dependency: transitive
     description:
