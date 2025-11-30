@@ -98,6 +98,9 @@ export 'package:ustahub/app/modules/fcm/controller/fcm_controller.dart';
 export 'package:ustahub/app/modules/fcm/service/fcm_service.dart';
 export 'package:ustahub/app/modules/account/controller/delete_account_controller.dart';
 export 'package:ustahub/app/modules/countdown/controller/countdown_controller.dart';
+export 'package:ustahub/app/modules/provider_portfolio/controller/portfolio_controller.dart';
+export 'package:ustahub/app/modules/quote/controller/quote_controller.dart';
+export 'package:ustahub/app/modules/quote/controller/quote_response_controller.dart';
 
 // Views/Pages
 export 'package:ustahub/app/modules/Auth/OTP/view/otp_view.dart';
@@ -134,6 +137,8 @@ export 'package:ustahub/app/modules/bookings/repository/consumer_booking_history
 export 'package:ustahub/app/modules/rating/repository/rating_repository.dart';
 export 'package:ustahub/app/modules/provider_details/repository/provider_ratings_repository.dart';
 export 'package:ustahub/app/modules/account/repository/account_respository.dart';
+export 'package:ustahub/app/modules/provider_portfolio/repository/portfolio_repository.dart';
+export 'package:ustahub/app/modules/quote/repository/quote_repository.dart';
 
 // Models
 export 'package:ustahub/app/modules/provider_service_selection/model_class/service_model_class.dart';
@@ -147,3 +152,5 @@ export 'package:ustahub/app/modules/rating/model/rating_model.dart';
 export 'package:ustahub/app/modules/provider_details/model_class/provider_ratings_model.dart';
 export 'package:ustahub/app/modules/provider_completed_booking_details/model_class/Booking_details_model_class.dart'
     hide Service;
+export 'package:ustahub/app/modules/provider_portfolio/model/portfolio_model.dart';
+export 'package:ustahub/app/modules/quote/model/quote_model.dart';

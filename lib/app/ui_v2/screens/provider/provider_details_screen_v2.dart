@@ -3,6 +3,11 @@ import 'package:ustahub/app/modules/favourite_providers/controller/favourite_pro
 import 'package:ustahub/app/modules/provider_details/model_class/provider_details_model_class.dart';
 import 'package:ustahub/app/modules/provider_details/model_class/provider_ratings_model.dart';
 import 'package:ustahub/app/modules/provider_document/view/provider_document_view.dart';
+import 'package:ustahub/app/modules/provider_portfolio/controller/portfolio_controller.dart';
+import 'package:ustahub/app/modules/quote/controller/quote_controller.dart';
+import 'package:ustahub/app/ui_v2/components/cards/portfolio_card_v2.dart';
+import 'package:ustahub/app/ui_v2/screens/provider/portfolio/portfolio_gallery_screen_v2.dart';
+import 'package:ustahub/app/ui_v2/screens/quote/create_quote_request_screen_v2.dart';
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 
 class ProviderDetailsScreenV2 extends StatefulWidget {
@@ -135,7 +140,34 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
                 ),
                 SizedBox(height: AppSpacing.smVertical),
                 _buildRatingsSection(),
+                SizedBox(height: AppSpacing.mdVertical),
+                _buildPortfolioSection(),
                 SizedBox(height: AppSpacing.lgVertical),
+                // Request Quote button (for consumers only)
+                FutureBuilder<String?>(
+                  future: Sharedprefhelper.getRole(),
+                  builder: (context, snapshot) {
+                    final role = snapshot.data;
+                    if (role == 'consumer' && services.isNotEmpty) {
+                      return Column(
+                        children: [
+                          SecondaryButtonV2(
+                            text: 'Request Quote',
+                            onPressed: () {
+                              // Get first service and navigate to quote request
+                              final firstService = services.first;
+                              Get.to(() => CreateQuoteRequestScreenV2(
+                                serviceId: firstService.id ?? '',
+                              ));
+                            },
+                          ),
+                          SizedBox(height: AppSpacing.mdVertical),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
                 SecondaryButtonV2(
                   text: 'View provider documents',
                   onPressed: () {
@@ -332,6 +364,70 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
               (rating) => _RatingTile(rating: rating),
             )
             .toList(),
+      );
+    });
+  }
+
+  Widget _buildPortfolioSection() {
+    final portfolioController = Get.put(PortfolioController());
+    portfolioController.initialize(widget.id);
+
+    return Obx(() {
+      if (portfolioController.isLoading.value) {
+        return const SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      final portfolios = portfolioController.portfolios;
+      if (portfolios.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      // Show featured portfolios or first 3 portfolios
+      final displayPortfolios = portfolioController.featuredPortfolios.isNotEmpty
+          ? portfolioController.featuredPortfolios.take(3).toList()
+          : portfolios.take(3).toList();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Portfolio',
+                style: AppTextStyles.heading3,
+              ),
+              if (portfolios.length > 3)
+                TextButton(
+                  onPressed: () {
+                    Get.to(() => PortfolioGalleryScreenV2(
+                      providerId: widget.id,
+                    ));
+                  },
+                  child: Text(
+                    'View All (${portfolios.length})',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColorsV2.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.smVertical),
+          ...displayPortfolios.map(
+            (portfolio) => PortfolioCardV2(
+              portfolio: portfolio,
+              onTap: () {
+                Get.to(() => PortfolioGalleryScreenV2(
+                  providerId: widget.id,
+                ));
+              },
+            ),
+          ),
+        ],
       );
     });
   }

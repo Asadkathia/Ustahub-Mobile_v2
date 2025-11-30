@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:ustahub/network/supabase_client.dart';
 
@@ -315,8 +316,46 @@ class SupabaseApiServices {
     String? serviceId,
     String? searchTerm,
     int? limit,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    double? maxDistance,
+    double? latitude,
+    double? longitude,
+    String? sortBy,
+    bool? verifiedOnly,
+    bool? availableToday,
   }) async {
     try {
+      // Use advanced search if any advanced parameters are provided
+      if (minPrice != null ||
+          maxPrice != null ||
+          minRating != null ||
+          maxDistance != null ||
+          verifiedOnly == true ||
+          availableToday == true ||
+          sortBy != null) {
+        final response = await supabase.rpc(
+          'advanced_search_providers',
+          params: {
+            if (searchTerm != null && searchTerm.isNotEmpty)
+              'p_search_term': searchTerm,
+            if (serviceId != null) 'p_service_id': serviceId,
+            if (minRating != null) 'p_min_rating': minRating,
+            if (minPrice != null) 'p_min_price': minPrice,
+            if (maxPrice != null) 'p_max_price': maxPrice,
+            if (maxDistance != null) 'p_max_distance_km': maxDistance,
+            if (latitude != null) 'p_latitude': latitude,
+            if (longitude != null) 'p_longitude': longitude,
+            if (verifiedOnly != null) 'p_verified_only': verifiedOnly,
+            if (availableToday != null) 'p_available_today': availableToday,
+            if (sortBy != null) 'p_sort_by': sortBy,
+          },
+        );
+        return _handleResponse(response);
+      }
+
+      // Use simple search for basic queries
       if (limit != null && (searchTerm == null || searchTerm.isEmpty)) {
         final response = await supabase.rpc(
           'get_top_providers',
@@ -765,10 +804,144 @@ class SupabaseApiServices {
       }
 
       data['consumer_id'] = userId;
+      
+      // Check if booking exists to mark as verified
+      if (data['booking_id'] != null) {
+        final booking = await supabase
+            .from('bookings')
+            .select('id, status')
+            .eq('id', data['booking_id'])
+            .maybeSingle();
+        
+        if (booking != null && booking['status'] == 'completed') {
+          data['verified_booking'] = true;
+        }
+      }
+
       final response =
           await supabase.from('ratings').insert(data).select().single();
 
       return _handleResponse(response, statusCode: 201);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> voteReviewHelpful(
+    String ratingId,
+    bool isHelpful,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      // Upsert vote
+      await supabase
+          .from('review_helpful_votes')
+          .upsert({
+            'rating_id': ratingId,
+            'user_id': userId,
+            'is_helpful': isHelpful,
+          });
+
+      return _handleResponse({'message': 'Vote recorded'});
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> respondToReview(
+    String ratingId,
+    String responseText,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      // Get rating to verify provider
+      final rating = await supabase
+          .from('ratings')
+          .select('provider_id')
+          .eq('id', ratingId)
+          .single();
+
+      if (rating['provider_id'] != userId) {
+        return _handleError('Unauthorized', statusCode: 403);
+      }
+
+      final response = await supabase
+          .from('review_responses')
+          .upsert({
+            'rating_id': ratingId,
+            'provider_id': userId,
+            'response_text': responseText,
+          })
+          .select()
+          .single();
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getReviewResponses(String providerId) async {
+    try {
+      final response = await supabase
+          .from('review_responses')
+          .select('''
+            *,
+            ratings!inner(id, review, rating, consumer_id)
+          ''')
+          .eq('provider_id', providerId)
+          .order('created_at', ascending: false);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getReviewsWithFilters(
+    String providerId, {
+    String? sortBy,
+    bool? withPhotos,
+    bool? verifiedOnly,
+  }) async {
+    try {
+      var query = supabase
+          .from('ratings')
+          .select('''
+            *,
+            user_profiles!ratings_consumer_id_fkey(id, name, avatar),
+            review_responses(*)
+          ''')
+          .eq('provider_id', providerId);
+
+      if (withPhotos == true) {
+        query = query.not('image_urls', 'eq', '{}');
+      }
+
+      if (verifiedOnly == true) {
+        query = query.eq('verified_booking', true);
+      }
+
+      // Sort - apply ordering (must be last before execution)
+      dynamic finalQuery = query;
+      if (sortBy == 'helpful') {
+        finalQuery = finalQuery.order('helpful_count', ascending: false);
+      } else if (sortBy == 'recent') {
+        finalQuery = finalQuery.order('created_at', ascending: false);
+      } else {
+        finalQuery = finalQuery.order('created_at', ascending: false);
+      }
+
+      final response = await finalQuery;
+      return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
     }
@@ -1231,6 +1404,304 @@ class SupabaseApiServices {
           .order('created_at', ascending: false);
 
       return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Portfolio Operations
+  Future<Map<String, dynamic>> getProviderPortfolios(
+    String providerId, {
+    String? serviceId,
+  }) async {
+    try {
+      var query = supabase
+          .from('provider_portfolios')
+          .select()
+          .eq('provider_id', providerId);
+
+      if (serviceId != null) {
+        query = query.eq('service_id', serviceId);
+      }
+
+      // Apply ordering after all filters
+      final finalQuery = query
+          .order('display_order', ascending: true)
+          .order('created_at', ascending: false);
+
+      final response = await finalQuery;
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> createPortfolio(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      data['provider_id'] = userId;
+      final response = await supabase
+          .from('provider_portfolios')
+          .insert(data)
+          .select()
+          .single();
+
+      return _handleResponse(response, statusCode: 201);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePortfolio(
+    String portfolioId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      final response = await supabase
+          .from('provider_portfolios')
+          .update(data)
+          .eq('id', portfolioId)
+          .eq('provider_id', userId)
+          .select()
+          .single();
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> deletePortfolio(String portfolioId) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      await supabase
+          .from('provider_portfolios')
+          .delete()
+          .eq('id', portfolioId)
+          .eq('provider_id', userId);
+
+      return _handleResponse({'message': 'Portfolio deleted successfully'});
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadPortfolioMedia(
+    String filePath,
+    List<int> fileBytes,
+    String portfolioId,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      // Upload to portfolios bucket
+      await supabase.storage
+          .from('portfolios')
+          .uploadBinary('$portfolioId/$filePath', Uint8List.fromList(fileBytes));
+
+      // Get public URL
+      final url = supabase.storage
+          .from('portfolios')
+          .getPublicUrl('$portfolioId/$filePath');
+
+      return _handleResponse({
+        'path': '$portfolioId/$filePath',
+        'url': url,
+      });
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Quote Operations
+  Future<Map<String, dynamic>> createQuoteRequest(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      data['consumer_id'] = userId;
+      if (data['expires_at'] == null) {
+        // Default expiry: 7 days from now
+        data['expires_at'] = DateTime.now()
+            .add(const Duration(days: 7))
+            .toIso8601String();
+      }
+
+      final response = await supabase
+          .from('quote_requests')
+          .insert(data)
+          .select()
+          .single();
+
+      return _handleResponse(response, statusCode: 201);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getQuoteRequests({String? status}) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      var query = supabase
+          .from('quote_requests')
+          .select('''
+            *,
+            services(*),
+            addresses(*)
+          ''')
+          .eq('consumer_id', userId);
+
+      if (status != null) {
+        query = query.eq('status', status);
+      }
+
+      // Apply ordering after all filters
+      final finalQuery = query.order('created_at', ascending: false);
+
+      final response = await finalQuery;
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> respondToQuote(
+    String quoteRequestId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      data['provider_id'] = userId;
+      data['quote_request_id'] = quoteRequestId;
+
+      final response = await supabase
+          .from('quote_responses')
+          .insert(data)
+          .select()
+          .single();
+
+      // Update quote request status
+      await supabase
+          .from('quote_requests')
+          .update({'status': 'responded'})
+          .eq('id', quoteRequestId);
+
+      return _handleResponse(response, statusCode: 201);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getQuoteResponses(String quoteRequestId) async {
+    try {
+      final response = await supabase
+          .from('quote_responses')
+          .select('''
+            *,
+            user_profiles!quote_responses_provider_id_fkey(id, name, avatar),
+            providers!quote_responses_provider_id_fkey(average_rating, total_ratings)
+          ''')
+          .eq('quote_request_id', quoteRequestId)
+          .order('price', ascending: true);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getServicePriceRange(String serviceId) async {
+    try {
+      final response = await supabase.rpc(
+        'get_service_price_range',
+        params: {'p_service_id': serviceId},
+      );
+
+      return _handleResponse(response.isNotEmpty ? response[0] : {});
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> compareProviderPrices(
+    List<String> providerIds,
+    String serviceId,
+  ) async {
+    try {
+      final response = await supabase.rpc(
+        'compare_provider_prices',
+        params: {
+          'p_service_id': serviceId,
+          'p_provider_ids': providerIds,
+        },
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> acceptQuoteResponse(
+    String quoteResponseId,
+  ) async {
+    try {
+      final userId = SupabaseClientService.currentUserId;
+      if (userId == null) {
+        return _handleError('User not authenticated', statusCode: 401);
+      }
+
+      // Get quote response to find quote request
+      final quoteResponse = await supabase
+          .from('quote_responses')
+          .select('quote_request_id')
+          .eq('id', quoteResponseId)
+          .single();
+
+      // Mark this response as accepted
+      await supabase
+          .from('quote_responses')
+          .update({'is_accepted': true})
+          .eq('id', quoteResponseId);
+
+      // Mark all other responses for this request as not accepted
+      await supabase
+          .from('quote_responses')
+          .update({'is_accepted': false})
+          .eq('quote_request_id', quoteResponse['quote_request_id'])
+          .neq('id', quoteResponseId);
+
+      return _handleResponse({'message': 'Quote accepted successfully'});
     } catch (e) {
       return _handleError(e);
     }

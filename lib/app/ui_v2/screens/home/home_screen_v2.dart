@@ -23,6 +23,7 @@ import 'package:ustahub/app/modules/consumer_homepage/controller/consumer_homepa
 import 'package:ustahub/app/modules/countdown/controller/countdown_controller.dart';
 import 'package:ustahub/utils/cache/image_cache_config.dart';
 import '../search/search_screen_v2.dart';
+import '../search/advanced_search_screen_v2.dart';
 import '../../components/cards/recommendation_card_v2.dart';
 import '../provider/provider_details_screen_v2.dart';
 import '../../utils/service_icon_helper.dart';
@@ -124,12 +125,18 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         right: 0,
         bottom: 0,
       ),
-      child: GestureDetector(
+        child: GestureDetector(
         onTap: () {
           if (UIConfig.useNewUI) {
             Get.to(() => SearchScreenV2());
           } else {
             Get.to(() => SearchView());
+          }
+        },
+        onLongPress: () {
+          // Long press to open advanced search
+          if (UIConfig.useNewUI) {
+            Get.to(() => AdvancedSearchScreenV2());
           }
         },
         child: Container(

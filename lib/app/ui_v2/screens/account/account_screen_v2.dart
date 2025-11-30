@@ -6,6 +6,8 @@ import 'package:ustahub/app/modules/my_service/view/my_service_view.dart';
 import 'package:ustahub/app/modules/provider_document/view/provider_document_view.dart';
 import 'package:ustahub/app/modules/provider_edit_profile/view/provider_edit_profile_view.dart';
 import 'package:ustahub/app/modules/provider_profile/controller/provider_profile_controller.dart';
+import 'package:ustahub/app/ui_v2/screens/provider/portfolio/portfolio_gallery_screen_v2.dart';
+import 'package:ustahub/app/ui_v2/screens/quote/quote_requests_list_screen_v2.dart';
 import 'package:ustahub/components/confirm_dialog.dart';
 import '../settings/language_screen_v2.dart';
 import '../settings/rate_us_sheet_v2.dart';
@@ -247,6 +249,11 @@ class SettingsMenuV2 extends StatelessWidget {
               onTap: () => Get.to(() => FavouriteProvidersScreenV2()),
             ),
             SettingsTileV2(
+              icon: Icons.request_quote_outlined,
+              title: 'My Quote Requests',
+              onTap: () => Get.to(() => const QuoteRequestsListScreenV2()),
+            ),
+            SettingsTileV2(
               icon: Icons.language,
               title: AppLocalizations.of(context)!.languge,
               onTap: () => Get.to(() => LanguageScreenV2()),
@@ -351,6 +358,18 @@ class SettingsMenuForProviderV2 extends StatelessWidget {
               title: AppLocalizations.of(context)!.documents,
               onTap: () {
                 Get.to(() => ProviderDocumentView());
+              },
+            ),
+            SettingsTileV2(
+              icon: Icons.photo_library_outlined,
+              title: 'Manage Portfolio',
+              onTap: () async {
+                final userId = SupabaseClientService.currentUserId;
+                if (userId != null) {
+                  Get.to(() => PortfolioGalleryScreenV2(providerId: userId));
+                } else {
+                  CustomToast.error('Please log in to manage your portfolio');
+                }
               },
             ),
             SettingsTileV2(

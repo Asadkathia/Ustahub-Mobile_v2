@@ -6,6 +6,7 @@ import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/spacing/app_spacing.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../provider/provider_details_screen_v2.dart';
+import 'advanced_search_screen_v2.dart';
 
 class SearchScreenV2 extends StatefulWidget {
   SearchScreenV2({super.key});
@@ -65,9 +66,33 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
                   AppLocalizations.of(context)!.recents,
                   style: AppTextStyles.bodyMediumSecondary,
                 ),
-                TextButton(
-                  onPressed: controller.clearAll,
-                  child: Text(AppLocalizations.of(context)!.clearAll),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Get.to(() => AdvancedSearchScreenV2(
+                          initialKeyword: searchTextController.text.trim().isEmpty
+                              ? null
+                              : searchTextController.text.trim(),
+                        ));
+                      },
+                      icon: Icon(
+                        Icons.tune,
+                        size: 16.sp,
+                        color: AppColorsV2.primary,
+                      ),
+                      label: Text(
+                        'Advanced',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColorsV2.primary,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: controller.clearAll,
+                      child: Text(AppLocalizations.of(context)!.clearAll),
+                    ),
+                  ],
                 ),
               ],
             ),

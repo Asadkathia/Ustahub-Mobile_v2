@@ -1,5 +1,6 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/provider_completed_booking_details/view/booking_details_view.dart';
+import 'package:ustahub/app/ui_v2/screens/rating/enhanced_rating_screen_v2.dart';
 
 class BookingView extends StatelessWidget {
   BookingView({super.key});
@@ -158,14 +159,14 @@ class BookingHistoryListView extends StatelessWidget {
                   print("Rebook tapped for booking: ${booking.bookingId}");
                 },
                 greenButtonOnTap: () {
-                  // For completed bookings, show rating view
+                  // For completed bookings, show enhanced rating view
                   if (booking.status.toLowerCase() == 'completed') {
                     Get.to(
-                      () => RatingView(
+                      () => EnhancedRatingScreenV2(
                         providerId: booking.providerId.toString(),
                         bookingId: booking.id ?? '',
                         providerName: booking.provider.name,
-                        providerImageUrl: blankProfileImage,
+                        providerImageUrl: booking.provider.avatar ?? blankProfileImage,
                       ),
                     );
                   } else {

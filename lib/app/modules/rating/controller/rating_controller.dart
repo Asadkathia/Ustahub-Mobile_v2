@@ -16,6 +16,15 @@ class RatingController extends GetxController {
   final RxString providerName = ''.obs;
   final RxString providerImageUrl = ''.obs;
 
+  // Enhanced review features
+  final RxList<File> reviewImages = <File>[].obs;
+  final RxMap<String, double> categoryRatings = <String, double>{
+    'quality': 0.0,
+    'punctuality': 0.0,
+    'communication': 0.0,
+    'price': 0.0,
+  }.obs;
+
   // Initialize with provider & booking data
   void initializeRating({
     required String id,
@@ -61,6 +70,12 @@ class RatingController extends GetxController {
         bookingId: bookingId.value,
         stars: currentRating.value.round(),
         review: reviewController.text.trim(),
+        imageUrls: reviewImages.isNotEmpty
+            ? await _uploadReviewImages()
+            : null,
+        categoryRatings: categoryRatings.values.any((v) => v > 0)
+            ? categoryRatings
+            : null,
       );
 
       print('Rating API Response: $response');
@@ -118,6 +133,45 @@ class RatingController extends GetxController {
     return providerId.value.isNotEmpty &&
         currentRating.value > 0.0 &&
         reviewController.text.trim().isNotEmpty;
+  }
+
+  // Upload review images
+  Future<List<String>> _uploadReviewImages() async {
+    final uploader = Get.put(UploadFile());
+    final List<String> urls = [];
+
+    for (final file in reviewImages) {
+      final url = await uploader.uploadFile(
+        file: file,
+        type: 'document', // Use document bucket for review images
+      );
+      if (url != null && url.isNotEmpty) {
+        urls.add(url);
+      }
+    }
+
+    return urls;
+  }
+
+  // Update category rating
+  void updateCategoryRating(String category, double rating) {
+    categoryRatings[category] = rating;
+  }
+
+  // Add review image
+  Future<void> addReviewImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      reviewImages.add(File(image.path));
+    }
+  }
+
+  // Remove review image
+  void removeReviewImage(int index) {
+    if (index >= 0 && index < reviewImages.length) {
+      reviewImages.removeAt(index);
+    }
   }
 
   @override

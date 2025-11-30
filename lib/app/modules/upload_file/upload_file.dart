@@ -44,6 +44,11 @@ class UploadFile extends GetxController {
         case 'service-image':
           bucket = 'service-images';
           break;
+        case 'portfolio':
+        case 'portfolio-image':
+        case 'portfolio-video':
+          bucket = 'portfolios';
+          break;
         default:
           bucket = 'avatars'; // Default bucket
       }

@@ -110,4 +110,54 @@ class ProviderController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  // Advanced search with filters
+  Future<void> advancedSearchProviders({
+    String? keyword,
+    String? serviceId,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    double? maxDistance,
+    String? sortBy,
+    bool? verifiedOnly,
+    bool? availableToday,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      await _ensureLocationInitialized();
+      
+      double? latitude;
+      double? longitude;
+      if (locationController.latitude.value != 0.0 && locationController.longitude.value != 0.0) {
+        latitude = locationController.latitude.value;
+        longitude = locationController.longitude.value;
+      }
+
+      final response = await _api.getProviders(
+        serviceId: serviceId,
+        searchTerm: keyword,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        minRating: minRating,
+        maxDistance: maxDistance,
+        latitude: latitude,
+        longitude: longitude,
+        sortBy: sortBy,
+        verifiedOnly: verifiedOnly,
+        availableToday: availableToday,
+      );
+
+      if (response['statusCode'] == 200 && response['body']['data'] != null) {
+        final data = response['body']['data'] as List;
+        providersList.value =
+            data.map((e) => ProvidersListModelClass.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('[PROVIDER_CONTROLLER] Advanced search error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

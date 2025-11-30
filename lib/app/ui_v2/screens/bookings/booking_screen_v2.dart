@@ -1,5 +1,6 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/provider_completed_booking_details/view/booking_details_view.dart';
+import 'package:ustahub/app/ui_v2/screens/rating/enhanced_rating_screen_v2.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
 import '../../components/tabs/custom_tab_button_v2.dart';
 import '../../components/cards/booking_card_v2.dart';
@@ -169,11 +170,12 @@ class BookingHistoryListViewV2 extends StatelessWidget {
                 },
                 greenButtonOnTap: () {
                   if (booking.status.toLowerCase() == 'completed') {
+                    // Use enhanced rating screen with image support
                     Get.to(
-                      () => RatingView(
+                      () => EnhancedRatingScreenV2(
                         providerId: booking.providerId.toString(),
                         providerName: booking.provider.name,
-                        providerImageUrl: blankProfileImage,
+                        providerImageUrl: booking.provider.avatar ?? blankProfileImage,
                         bookingId: booking.id,
                       ),
                     );
