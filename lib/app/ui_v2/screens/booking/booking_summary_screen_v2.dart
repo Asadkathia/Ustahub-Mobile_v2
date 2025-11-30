@@ -1,8 +1,10 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/booking_summary/controller/booking_summary_controller.dart';
 import 'package:ustahub/app/modules/provider_details/controller/provider_details_controller.dart';
+import 'package:ustahub/app/modules/provider_details/controller/plan_selection_controller.dart';
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:ustahub/utils/contstants/constants.dart';
 
 class BookingSummaryScreenV2 extends StatelessWidget {
   final String providerId,
@@ -18,6 +20,7 @@ class BookingSummaryScreenV2 extends StatelessWidget {
   final BookingSummaryController bookingController = Get.put(
     BookingSummaryController(),
   );
+  late final PlanSelectionController plansController;
 
   BookingSummaryScreenV2({
     super.key,
@@ -36,6 +39,12 @@ class BookingSummaryScreenV2 extends StatelessWidget {
     } catch (e) {
       // If controller doesn't exist, create it
       providerController = Get.put(ProviderDetailsController());
+    }
+    // Get plan selection controller
+    try {
+      plansController = Get.find<PlanSelectionController>();
+    } catch (e) {
+      plansController = Get.put(PlanSelectionController(), permanent: true);
     }
   }
 
@@ -78,6 +87,9 @@ class BookingSummaryScreenV2 extends StatelessWidget {
               dateTime: "$bookingDate - ${convertTo12HourFormat(bookingTime)}",
               serviceName: serviceName,
             ),
+            SizedBox(height: AppSpacing.lgVertical),
+            // Price Breakdown Card
+            Obx(() => _buildPriceBreakdownCard()),
             SizedBox(height: AppSpacing.xlVertical * 2), // Space for bottom button
           ],
         ),
@@ -102,16 +114,23 @@ class BookingSummaryScreenV2 extends StatelessWidget {
             onPressed: bookingController.isLoading.value
                 ? null
                 : () async {
+                    // Get selected plan ID
+                    final selectedPlan = plansController.selectedPlan.value;
+                    final planId = selectedPlan?.id;
+                    
                     final bookingData = {
                       "booking_id":
                           "BOOK-${DateTime.now().millisecondsSinceEpoch}",
                       "provider_id": providerId,
                       "service_id": serviceId,
+                      "plan_id": planId,
                       "address_id": addressId,
                       "booking_date": bookingDate,
                       "booking_time": bookingTime,
                       "visiting_charge": visitingCharge,
                       "note": note,
+                      "provider_name": providerName,
+                      "service_name": serviceName,
                       "service_fee": 0,
                       "total": 0,
                       "item_total": 0,
@@ -309,6 +328,94 @@ class BookingSummaryScreenV2 extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceBreakdownCard() {
+    // Get selected plan
+    final selectedPlan = plansController.selectedPlan.value;
+    final planPrice = double.tryParse(selectedPlan?.planPrice ?? '0') ?? 0.0;
+    final visitFee = visitingCharge.toDouble();
+    final itemTotal = planPrice + visitFee;
+    final serviceFee = itemTotal * 0.05;
+    final totalAmount = itemTotal + serviceFee;
+
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColorsV2.background,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        boxShadow: [
+          BoxShadow(
+            color: AppColorsV2.shadowLight,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: AppColorsV2.primaryLight.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+                ),
+                child: Icon(
+                  Icons.receipt_long,
+                  color: AppColorsV2.primary,
+                  size: AppSpacing.iconMedium,
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              Text(
+                'Price Breakdown',
+                style: AppTextStyles.heading3,
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.mdVertical),
+          _buildPriceRow('Service Price', planPrice),
+          SizedBox(height: AppSpacing.smVertical),
+          _buildPriceRow('Visit Fee', visitFee),
+          SizedBox(height: AppSpacing.smVertical),
+          _buildPriceRow('Service Fee (5%)', serviceFee),
+          SizedBox(height: AppSpacing.mdVertical),
+          Divider(color: AppColorsV2.borderLight),
+          SizedBox(height: AppSpacing.smVertical),
+          _buildPriceRow('Total Amount', totalAmount, isTotal: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, double amount, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: isTotal
+              ? AppTextStyles.heading4
+              : AppTextStyles.bodyMedium.copyWith(
+                  color: AppColorsV2.textSecondary,
+                ),
+        ),
+        Text(
+          '\$${amount.toStringAsFixed(2)}',
+          style: isTotal
+              ? AppTextStyles.heading4.copyWith(
+                  color: AppColorsV2.primary,
+                  fontWeight: FontWeight.bold,
+                )
+              : AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
         ),
       ],
     );

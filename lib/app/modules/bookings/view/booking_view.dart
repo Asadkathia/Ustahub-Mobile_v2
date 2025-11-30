@@ -3,7 +3,11 @@ import 'package:ustahub/app/modules/provider_completed_booking_details/view/book
 
 class BookingView extends StatelessWidget {
   BookingView({super.key});
-  final BookingController controller = Get.put(BookingController());
+  
+  BookingController get controller {
+    Get.lazyPut(() => BookingController());
+    return Get.find<BookingController>();
+  }
 
   @override
   Widget build(BuildContext context) {

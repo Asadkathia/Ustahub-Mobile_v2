@@ -21,8 +21,8 @@ import 'package:ustahub/app/ui_v2/design_system/typography/app_text_styles.dart'
 import 'package:ustahub/app/ui_v2/design_system/spacing/app_spacing.dart';
 import 'package:ustahub/app/modules/consumer_homepage/controller/consumer_homepage_controller.dart';
 import 'package:ustahub/app/modules/countdown/controller/countdown_controller.dart';
-import 'package:ustahub/utils/cache/image_cache_config.dart';
 import '../search/search_screen_v2.dart';
+import '../search/advanced_search_screen_v2.dart';
 import '../../components/cards/recommendation_card_v2.dart';
 import '../provider/provider_details_screen_v2.dart';
 import '../../utils/service_icon_helper.dart';
@@ -35,10 +35,15 @@ class HomeScreenV2 extends StatefulWidget {
 }
 
 class _HomeScreenV2State extends State<HomeScreenV2> {
-  final ConsumerHomepageController controller = Get.put(
-    ConsumerHomepageController(),
-  );
-  final BannerController bannerController = Get.put(BannerController());
+  ConsumerHomepageController get controller {
+    Get.lazyPut(() => ConsumerHomepageController());
+    return Get.find<ConsumerHomepageController>();
+  }
+  
+  BannerController get bannerController {
+    Get.lazyPut(() => BannerController());
+    return Get.find<BannerController>();
+  }
   final CarouselSliderController carouselController = CarouselSliderController();
   late final CountdownController countdownController;
   int currentBannerIndex = 0;
@@ -49,8 +54,30 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
     // Initialize countdown controller with GetX
     // Use Get.findOrPut to avoid creating multiple instances if already exists
     // Since this is a global limited offer countdown, we use a singleton
-    countdownController = Get.findOrPut(() => CountdownController(), tag: 'countdown');
+    if (Get.isRegistered<CountdownController>(tag: 'countdown')) {
+      countdownController = Get.find<CountdownController>(tag: 'countdown');
+    } else {
+      countdownController = Get.put(CountdownController(), tag: 'countdown');
+    }
     controller.providerController.initializeLocation();
+    
+    // Update countdown controller with country info when available
+    _updateCampaignBasedOnLocation();
+  }
+
+  /// Update campaign based on user's location
+  void _updateCampaignBasedOnLocation() {
+    // Listen to banner controller's country changes
+    ever(bannerController.currentCountry, (String country) {
+      if (country.isNotEmpty) {
+        countdownController.updateCountry(country);
+      }
+    });
+    
+    // Also check if country is already available
+    if (bannerController.currentCountry.value.isNotEmpty) {
+      countdownController.updateCountry(bannerController.currentCountry.value);
+    }
   }
 
   @override
@@ -164,9 +191,20 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                   ),
                 ),
               ),
-              SizedBox(
-                width: AppSpacing.screenPaddingHorizontal + 22.w + 12.w,
+              GestureDetector(
+                onTap: () {
+                  Get.to(() => const AdvancedSearchScreenV2());
+                },
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  child: Icon(
+                    Icons.tune,
+                    color: AppColorsV2.textOnPrimary,
+                    size: 22.w,
+                  ),
+                ),
               ),
+              SizedBox(width: AppSpacing.screenPaddingHorizontal),
             ],
           ),
         ),
@@ -199,13 +237,22 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         );
       }
 
-      // Filter out banners with invalid image URLs
-      final validBanners = banners.where((banner) {
+      // Filter out banners with invalid image URLs and deduplicate by image URL
+      final Map<String, BannerModelClass> seenImages = {};
+      final List<BannerModelClass> validBanners = [];
+      
+      for (var banner in banners) {
         final imageUrl = banner.image;
-        return imageUrl != null && 
-               imageUrl.isNotEmpty && 
-               Uri.tryParse(imageUrl) != null;
-      }).toList();
+        if (imageUrl != null && 
+            imageUrl.isNotEmpty && 
+            Uri.tryParse(imageUrl) != null) {
+          // Deduplicate by image URL to prevent visual duplicates
+          if (!seenImages.containsKey(imageUrl)) {
+            seenImages[imageUrl] = banner;
+            validBanners.add(banner);
+          }
+        }
+      }
 
       if (validBanners.isEmpty) {
         if (kDebugMode) {
@@ -263,7 +310,6 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                     children: [
                       CachedNetworkImage(
                         imageUrl: imageUrl,
-                        cacheManager: getImageCacheManager(),
                         fit: BoxFit.cover,
                         alignment: const Alignment(0.1, 0),
                         placeholder: (context, url) => Container(
@@ -357,47 +403,57 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
   }
 
   Widget _buildLimitedOfferSection() {
-    return Obx(() => Container(
-      margin: EdgeInsets.only(
-        left: 0,
-        right: 0,
-        top: 0,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.screenPaddingHorizontal,
-        vertical: AppSpacing.smVertical,
-      ),
-      decoration: BoxDecoration(
-        color: AppColorsV2.primary,
-        borderRadius: BorderRadius.zero,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'LIMITED OFFER',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColorsV2.textOnPrimary,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+    return Obx(() {
+      // Check if campaign is active
+      if (!countdownController.isCampaignActive) {
+        return const SizedBox.shrink();
+      }
+
+      final campaign = countdownController.currentCampaign.value;
+      final campaignTitle = campaign?.title ?? _getLocalizedOfferTitle();
+      final campaignDiscount = campaign?.discountText ?? _getLocalizedDiscountText();
+
+      return Container(
+        margin: EdgeInsets.only(
+          left: 0,
+          right: 0,
+          top: 0,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPaddingHorizontal,
+          vertical: AppSpacing.smVertical,
+        ),
+        decoration: BoxDecoration(
+          color: AppColorsV2.primary,
+          borderRadius: BorderRadius.zero,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    campaignTitle,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColorsV2.textOnPrimary,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'Save up to 50%',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColorsV2.textOnPrimary,
-                    fontWeight: FontWeight.bold,
+                  SizedBox(height: 4.h),
+                  Text(
+                    campaignDiscount,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColorsV2.textOnPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -432,10 +488,42 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
           ),
         ],
       ),
-    ));
+      );
+    });
+  }
+
+  /// Get localized offer title (fallback if campaign doesn't provide one)
+  String _getLocalizedOfferTitle() {
+    try {
+      // Try to get localized string, fallback to English
+      final localizations = AppLocalizations.of(context);
+      // If localization keys exist, use them
+      // For now, return default English text
+      // TODO: Add localization keys to ARB files if needed
+      return 'LIMITED OFFER';
+    } catch (e) {
+      return 'LIMITED OFFER';
+    }
+  }
+
+  /// Get localized discount text (fallback if campaign doesn't provide one)
+  String _getLocalizedDiscountText() {
+    try {
+      // Try to get localized string, fallback to English
+      final localizations = AppLocalizations.of(context);
+      // If localization keys exist, use them
+      // For now, return default English text
+      // TODO: Add localization keys to ARB files if needed
+      return 'Save up to 50%';
+    } catch (e) {
+      return 'Save up to 50%';
+    }
   }
 
   Widget _buildCountdownSegment(String value, String label) {
+    // Localize time unit labels
+    final localizedLabel = _getLocalizedTimeUnit(label);
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -448,13 +536,37 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         ),
         SizedBox(height: 2.h),
         Text(
-          label,
+          localizedLabel,
           style: AppTextStyles.captionSmall.copyWith(
             color: AppColorsV2.textOnPrimary.withOpacity(0.9),
           ),
         ),
       ],
     );
+  }
+
+  /// Get localized time unit (days, hours, min, sec)
+  String _getLocalizedTimeUnit(String unit) {
+    try {
+      final localizations = AppLocalizations.of(context);
+      // Map English units to localized versions
+      // For now, return as-is since we don't have specific localization keys
+      // TODO: Add localization keys for time units if needed
+      switch (unit.toLowerCase()) {
+        case 'days':
+          return 'days'; // Could be localized
+        case 'hours':
+          return 'hours'; // Could be localized
+        case 'min':
+          return 'min'; // Could be localized
+        case 'sec':
+          return 'sec'; // Could be localized
+        default:
+          return unit;
+      }
+    } catch (e) {
+      return unit;
+    }
   }
 
   Widget _buildServicesSection() {

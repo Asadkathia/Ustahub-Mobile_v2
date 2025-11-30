@@ -2,25 +2,45 @@ import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/network/supabase_api_services.dart';
 import 'package:ustahub/network/supabase_client.dart';
 import 'package:ustahub/app/modules/common_model_class/ProviderListModelClass.dart';
+import 'package:ustahub/app/ui_v2/screens/guest/login_required_screen_v2.dart';
 
 class FavouriteProviderController extends GetxController {
   RxList<ProvidersListModelClass> favouriteProvidersList =
       <ProvidersListModelClass>[].obs;
+  /// Check authentication and role
+  Future<bool> _checkAuth({required String requiredRole}) async {
+    final userId = SupabaseClientService.currentUserId;
+    if (userId == null) {
+      Get.to(() => LoginRequiredScreenV2(feature: 'Favorites'));
+      return false;
+    }
+    final role = await Sharedprefhelper.getRole();
+    if (requiredRole == 'consumer' && role != 'consumer') {
+      CustomToast.error('This feature is only available for consumers');
+      return false;
+    }
+    if (requiredRole == 'provider' && role != 'provider') {
+      CustomToast.error('This feature is only available for providers');
+      return false;
+    }
+    return true;
+  }
+
   Future<void> getFavouriteProviders() async {
+    // Check authentication before proceeding
+    if (!await _checkAuth(requiredRole: 'consumer')) {
+      return;
+    }
+    
     isLoading.value = true;
     try {
       final supabase = SupabaseClientService.instance;
       final userId = SupabaseClientService.currentUserId;
 
-      if (userId == null) {
-        CustomToast.error('Please login to view favorites');
-        return;
-      }
-
       final favoritesResponse = await supabase
           .from('favorites')
           .select('provider_id')
-          .eq('consumer_id', userId);
+          .eq('consumer_id', userId!);
 
       if (favoritesResponse.isEmpty) {
         favouriteProvidersList.clear();
@@ -56,6 +76,11 @@ class FavouriteProviderController extends GetxController {
   final _api = SupabaseApiServices();
 
   Future<void> favouriteToggle({required String id}) async {
+    // Check authentication before proceeding
+    if (!await _checkAuth(requiredRole: 'consumer')) {
+      return;
+    }
+    
     isLoading.value = true;
 
     try {

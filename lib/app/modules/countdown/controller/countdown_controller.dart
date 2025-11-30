@@ -1,23 +1,67 @@
 import 'dart:async';
 import 'package:get/get.dart';
 
+/// Campaign data model for countdown offers
+class CampaignData {
+  final String title;
+  final String discountText;
+  final String? country; // Optional country filter
+  final DateTime? endDate; // Optional end date
+
+  CampaignData({
+    required this.title,
+    required this.discountText,
+    this.country,
+    this.endDate,
+  });
+}
+
 /// Controller for countdown timer using GetX observables
 /// Replaces setState() with reactive variables for better performance
+/// Supports campaign data and country-based offers
 class CountdownController extends GetxController {
   final days = 7.obs;
   final hours = 12.obs;
   final minutes = 30.obs;
   final seconds = 20.obs;
 
+  // Campaign data
+  final Rx<CampaignData?> currentCampaign = Rx<CampaignData?>(null);
+  final RxString currentCountry = ''.obs;
+
   Timer? _countdownTimer;
 
   @override
   void onInit() {
     super.onInit();
+    // Initialize default campaign
+    _initializeDefaultCampaign();
     // Only start countdown if not already running
     if (_countdownTimer == null || !_countdownTimer!.isActive) {
       startCountdown();
     }
+  }
+
+  /// Initialize default campaign based on country
+  void _initializeDefaultCampaign() {
+    // Default campaign - can be overridden based on country
+    currentCampaign.value = CampaignData(
+      title: 'LIMITED OFFER',
+      discountText: 'Save up to 50%',
+    );
+  }
+
+  /// Set campaign data (can be called with country-specific campaigns)
+  void setCampaign(CampaignData campaign) {
+    currentCampaign.value = campaign;
+  }
+
+  /// Update country and potentially switch campaign
+  void updateCountry(String country) {
+    currentCountry.value = country;
+    // Country-specific campaign logic can be added here
+    // For now, we keep the default campaign
+    // In the future, this could fetch country-specific campaigns from API
   }
 
   @override
@@ -75,5 +119,12 @@ class CountdownController extends GetxController {
   
   /// Check if countdown is currently running
   bool get isRunning => _countdownTimer != null && _countdownTimer!.isActive;
+
+  /// Check if campaign is active (has end date and hasn't passed)
+  bool get isCampaignActive {
+    final campaign = currentCampaign.value;
+    if (campaign?.endDate == null) return true; // No end date = always active
+    return DateTime.now().isBefore(campaign!.endDate!);
+  }
 }
 

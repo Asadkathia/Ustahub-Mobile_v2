@@ -1,12 +1,16 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/booking_request/view/booking_request_view.dart';
 import 'package:ustahub/app/modules/provider_homepage/controller/provider_home_screen_controller.dart';
+import 'package:ustahub/app/modules/provider_edit_profile/view/provider_edit_profile_view.dart';
+import 'package:ustahub/app/modules/my_service/view/my_service_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
+import '../../components/feedback/nudge_banner_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
 import '../calendar/provider_calendar_screen_v2.dart';
+import '../../navigation/app_router_v2.dart';
 
 class ProviderHomeScreenV2 extends StatelessWidget {
   const ProviderHomeScreenV2({super.key});
@@ -26,7 +30,7 @@ class ProviderHomeScreenV2 extends StatelessWidget {
           onRefresh: () async {
             await Future.wait([
               profileController.fetchProfile(),
-              homeController.fetchProviderHomeScreenData(),
+              homeController.refreshData(),
             ]);
           },
           color: AppColorsV2.primary,
@@ -50,6 +54,12 @@ class ProviderHomeScreenV2 extends StatelessWidget {
                     isLoading: profileController.isLoading.value,
                   );
                 }),
+                SizedBox(height: AppSpacing.mdVertical),
+                // Nudge Banners
+                Obx(() => _buildNudgeBanners(
+                  profileController: profileController,
+                  homeController: homeController,
+                )),
                 SizedBox(height: AppSpacing.xlVertical),
                 // Overview Section
                 Text(
@@ -69,7 +79,7 @@ class ProviderHomeScreenV2 extends StatelessWidget {
                       childAspectRatio: 1.4,
                     ),
                     itemCount: homeController.isLoading.value
-                        ? 2
+                        ? 4
                         : _getDashboardItems(homeController).length,
                     itemBuilder: (context, index) {
                       if (homeController.isLoading.value) {
@@ -191,7 +201,7 @@ class ProviderHomeScreenV2 extends StatelessWidget {
   }
 
   Widget _buildDashboardCardV2({
-    required String icon,
+    required dynamic icon,
     required String label,
     required String value,
     required Color iconColor,
@@ -219,8 +229,14 @@ class ProviderHomeScreenV2 extends StatelessWidget {
               color: iconColor.withOpacity(0.12),
               borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
             ),
-            child: SvgPicture.asset(
-              icon,
+            child: icon is IconData
+                ? Icon(
+                    icon,
+                    color: iconColor,
+                    size: 24.sp,
+                  )
+                : SvgPicture.asset(
+                    icon as String,
               width: AppSpacing.iconLarge,
               height: AppSpacing.iconLarge,
               colorFilter: ColorFilter.mode(
@@ -280,6 +296,20 @@ class ProviderHomeScreenV2 extends StatelessWidget {
         'iconColor': AppColorsV2.primary,
         'route': 'calendar',
       },
+      {
+        'icon': Icons.calendar_today,
+        'label': 'Bookings This Month',
+        'value': "${data.overview.monthlyBookings}",
+        'iconColor': AppColorsV2.success,
+        'route': null,
+      },
+      {
+        'icon': Icons.attach_money,
+        'label': 'Monthly Earnings',
+        'value': "\$${data.overview.monthlyEarnings.toStringAsFixed(0)}",
+        'iconColor': AppColorsV2.warning,
+        'route': null,
+      },
     ];
   }
 
@@ -298,6 +328,20 @@ class ProviderHomeScreenV2 extends StatelessWidget {
         'value': "0",
         'iconColor': AppColorsV2.primary,
         'route': 'calendar',
+      },
+      {
+        'icon': Icons.calendar_today,
+        'label': 'Bookings This Month',
+        'value': "0",
+        'iconColor': AppColorsV2.success,
+        'route': null,
+      },
+      {
+        'icon': Icons.attach_money,
+        'label': 'Monthly Earnings',
+        'value': "\$0",
+        'iconColor': AppColorsV2.warning,
+        'route': null,
       },
     ];
   }
@@ -382,6 +426,89 @@ class ProviderHomeScreenV2 extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildNudgeBanners({
+    required ProviderProfileController profileController,
+    required ProviderHomeScreenController homeController,
+  }) {
+    final user = profileController.userProfile.value;
+    final homeData = homeController.homeScreenData.value;
+    
+    if (profileController.isLoading.value || homeController.isLoading.value) {
+      return const SizedBox.shrink();
+    }
+
+    final List<Widget> nudges = [];
+
+    // 1. Check profile completeness
+    if (user != null) {
+      final isProfileIncomplete = 
+          (user.bio == null || user.bio!.isEmpty) ||
+          (user.businessName == null || user.businessName!.isEmpty) ||
+          (user.avatar == null || user.avatar!.isEmpty || user.avatar == blankProfileImage);
+      
+      if (isProfileIncomplete) {
+        nudges.add(
+          NudgeBannerV2(
+            title: 'Complete Your Profile',
+            message: 'Add your bio, business name, and profile photo to attract more customers.',
+            icon: Icons.person_outline,
+            iconColor: AppColorsV2.warning,
+            actionText: 'Complete Profile',
+            onActionPressed: () {
+              Get.to(() => ProviderEditProfileView(user: user));
+            },
+          ),
+        );
+      }
+    }
+
+    // 2. Check plans
+    if (homeController.plansCount.value == 0) {
+      nudges.add(
+        NudgeBannerV2(
+          title: 'No Service Plans',
+          message: 'Add service plans to help customers book your services easily.',
+          icon: Icons.add_business_outlined,
+          iconColor: AppColorsV2.info,
+          actionText: 'Add Plans',
+            onActionPressed: () {
+              Get.to(() => MyServiceView());
+            },
+        ),
+      );
+    }
+
+    // 3. Check acceptance rate
+    if (homeData != null) {
+      final totalRequests = homeData.overview.bookingRequest + homeData.overview.calendar;
+      if (totalRequests > 0) {
+        final acceptanceRate = (homeData.overview.calendar / totalRequests) * 100;
+        if (acceptanceRate < 50 && totalRequests >= 5) {
+          nudges.add(
+            NudgeBannerV2(
+              title: 'Low Acceptance Rate',
+              message: 'Your acceptance rate is ${acceptanceRate.toStringAsFixed(0)}%. Accepting more bookings can help grow your business.',
+              icon: Icons.trending_down,
+              iconColor: AppColorsV2.error,
+              actionText: 'View Requests',
+              onActionPressed: () {
+                Get.to(() => BookingRequestView());
+              },
+            ),
+          );
+        }
+      }
+    }
+
+    if (nudges.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: nudges,
+    );
   }
 }
 

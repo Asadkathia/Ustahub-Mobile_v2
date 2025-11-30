@@ -2,10 +2,12 @@ import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/common_model_class/ProviderListModelClass.dart';
 import '../../components/cards/recommendation_card_v2.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
+import '../../components/feedback/empty_state_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/spacing/app_spacing.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../provider/provider_details_screen_v2.dart';
+import 'advanced_search_screen_v2.dart';
 
 class SearchScreenV2 extends StatefulWidget {
   SearchScreenV2({super.key});
@@ -43,19 +45,43 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: AppSpacing.mdVertical),
-            TextField(
-              controller: searchTextController,
-              decoration: InputDecoration(
-                hintText: 'Search services or providers',
-                prefixIcon: const Icon(Icons.search),
-                fillColor: AppColorsV2.inputBackground,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
-                  borderSide: BorderSide.none,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchTextController,
+                    decoration: InputDecoration(
+                      hintText: 'Search services or providers',
+                      prefixIcon: const Icon(Icons.search),
+                      fillColor: AppColorsV2.inputBackground,
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onSubmitted: (value) => _performSearch(value),
+                  ),
                 ),
-              ),
-              onSubmitted: (value) => _performSearch(value),
+                SizedBox(width: AppSpacing.sm),
+                IconButton(
+                  icon: Icon(
+                    Icons.tune,
+                    color: AppColorsV2.primary,
+                  ),
+                  onPressed: () {
+                    Get.to(() => AdvancedSearchScreenV2(
+                      initialKeyword: searchTextController.text.trim().isEmpty
+                          ? null
+                          : searchTextController.text.trim(),
+                    ));
+                  },
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColorsV2.primaryLight.withOpacity(0.1),
+                    padding: EdgeInsets.all(AppSpacing.md),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: AppSpacing.mdVertical),
             Row(
@@ -74,11 +100,10 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
             Expanded(
               child: Obx(() {
                 if (controller.searches.isEmpty) {
-                  return Center(
-                    child: Text(
-                      AppLocalizations.of(context)!.noServicesFound,
-                      style: AppTextStyles.bodyMediumSecondary,
-                    ),
+                  return EmptyStateV2(
+                    icon: Icons.history,
+                    title: AppLocalizations.of(context)!.noServicesFound,
+                    subtitle: 'Your recent searches will appear here',
                   );
                 }
 
@@ -112,12 +137,8 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
 
   Future<void> _performSearch(String keyword) async {
     if (keyword.trim().isEmpty) return;
-    ProviderController providerController;
-    if (Get.isRegistered<ProviderController>()) {
-      providerController = Get.find<ProviderController>();
-    } else {
-      providerController = Get.put(ProviderController());
-    }
+    Get.lazyPut(() => ProviderController());
+    final providerController = Get.find<ProviderController>();
     await providerController.searchProviders(keyword: keyword);
     await controller.addSearch(keyword);
     await controller.fetchSearches();
@@ -148,12 +169,18 @@ class ProvidersListScreenV2 extends StatelessWidget {
       appBar: AppAppBarV2(
         title: title,
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenPaddingHorizontal,
-          vertical: AppSpacing.mdVertical,
-        ),
-        itemCount: providers.length,
+      body: providers.isEmpty
+          ? EmptyStateV2(
+              icon: Icons.search_off,
+              title: 'No providers found',
+              subtitle: 'Try searching with different keywords',
+            )
+          : ListView.builder(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPaddingHorizontal,
+                vertical: AppSpacing.mdVertical,
+              ),
+              itemCount: providers.length,
         itemBuilder: (_, index) {
           final provider = providers[index];
           final servicesString = (provider.services ?? [])

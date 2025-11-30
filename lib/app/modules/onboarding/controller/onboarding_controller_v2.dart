@@ -83,8 +83,26 @@ class OnboardingControllerV2 extends GetxController {
       );
 
       if (remoteSlides.isNotEmpty) {
-        slides.assignAll(remoteSlides);
-        print('[ONBOARDING_V2] ✅ Loaded ${remoteSlides.length} slides');
+        // Deduplicate slides by image URL to prevent visual duplicates
+        final Map<String, OnboardingSlideModel> seenImages = {};
+        final List<OnboardingSlideModel> uniqueSlides = [];
+        
+        for (var slide in remoteSlides) {
+          final imageUrl = slide.resolvedImage;
+          if (imageUrl != null && imageUrl.isNotEmpty) {
+            // Deduplicate by image URL to prevent visual duplicates
+            if (!seenImages.containsKey(imageUrl)) {
+              seenImages[imageUrl] = slide;
+              uniqueSlides.add(slide);
+            }
+          } else {
+            // Include slides without images (they might have different content)
+            uniqueSlides.add(slide);
+          }
+        }
+        
+        slides.assignAll(uniqueSlides);
+        print('[ONBOARDING_V2] ✅ Loaded ${uniqueSlides.length} unique slides (from ${remoteSlides.length} total)');
       } else {
         print('[ONBOARDING_V2] ⚠️ No remote slides found, using fallback');
         slides.assignAll(_fallbackSlides());

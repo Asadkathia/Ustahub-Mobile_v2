@@ -4,6 +4,8 @@ import 'package:ustahub/app/modules/provider_details/model_class/provider_detail
 import 'package:ustahub/app/modules/provider_details/model_class/provider_ratings_model.dart';
 import 'package:ustahub/app/modules/provider_document/view/provider_document_view.dart';
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
+import 'package:ustahub/app/ui_v2/components/feedback/empty_state_v2.dart';
+import 'package:ustahub/app/ui_v2/components/feedback/skeleton_loader_v2.dart';
 
 class ProviderDetailsScreenV2 extends StatefulWidget {
   final String id;
@@ -51,16 +53,21 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.md),
+            itemCount: 5,
+            itemBuilder: (_, __) => SkeletonListItemV2(),
+          );
         }
 
         final providerDetails = controller.providerDetails.value;
         if (providerDetails == null) {
-          return Center(
-            child: StatusToastV2(
-              message: 'Provider unavailable',
-              type: StatusToastType.error,
-            ),
+          return EmptyStateV2(
+            icon: Icons.person_off,
+            title: 'Provider unavailable',
+            subtitle: 'This provider profile could not be loaded',
+            actionLabel: 'Retry',
+            onAction: () => controller.getProviderById(widget.id),
           );
         }
 
@@ -88,6 +95,8 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
                       .join(', '),
                   onFavoriteTap: _toggleFavorite,
                 ),
+                SizedBox(height: AppSpacing.mdVertical),
+                _buildTrustSignals(providerDetails),
                 SizedBox(height: AppSpacing.mdVertical),
                 _buildRatingSummary(context, provider),
                 SizedBox(height: AppSpacing.mdVertical),
@@ -211,6 +220,90 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTrustSignals(ProviderDetailsModelClass? providerDetails) {
+    final provider = providerDetails?.provider;
+    final overview = providerDetails?.overview;
+    
+    // Extract year from registeredSince
+    String? memberSinceYear;
+    if (overview?.registeredSince != null) {
+      // registeredSince is in format like "2 years ago", extract year
+      final since = overview!.registeredSince!;
+      if (since.contains('year')) {
+        final match = RegExp(r'(\d+)').firstMatch(since);
+        if (match != null) {
+          final yearsAgo = int.parse(match.group(1)!);
+          final year = DateTime.now().year - yearsAgo;
+          memberSinceYear = year.toString();
+        }
+      }
+    }
+    
+    final hiredCount = overview?.totalBookings ?? 0;
+    final city = overview?.city;
+    final isVerified = provider?.isVerified ?? false;
+    
+    // Only show if we have at least one signal
+    if (!isVerified && memberSinceYear == null && hiredCount == 0 && (city == null || city == 'N/A')) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColorsV2.background,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        boxShadow: [
+          BoxShadow(
+            color: AppColorsV2.shadowLight,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Trust Signals',
+            style: AppTextStyles.heading4,
+          ),
+          SizedBox(height: AppSpacing.mdVertical),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            children: [
+              if (isVerified)
+                _TrustSignalChip(
+                  icon: Icons.verified,
+                  label: 'Verified',
+                  color: AppColorsV2.success,
+                ),
+              if (memberSinceYear != null)
+                _TrustSignalChip(
+                  icon: Icons.calendar_today,
+                  label: 'Member since $memberSinceYear',
+                  color: AppColorsV2.primary,
+                ),
+              if (hiredCount > 0)
+                _TrustSignalChip(
+                  icon: Icons.work,
+                  label: 'Hired $hiredCount times',
+                  color: AppColorsV2.warning,
+                ),
+              if (city != null && city != 'N/A')
+                _TrustSignalChip(
+                  icon: Icons.location_on,
+                  label: city,
+                  color: AppColorsV2.info,
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -455,6 +548,54 @@ class _OverviewStat extends StatelessWidget {
           Text(
             value,
             style: AppTextStyles.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustSignalChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _TrustSignalChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
+        border: Border.all(
+          color: AppColorsV2.borderLight,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16.sp,
+            color: color,
+          ),
+          SizedBox(width: AppSpacing.xs),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

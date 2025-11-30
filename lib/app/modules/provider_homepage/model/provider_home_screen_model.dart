@@ -59,19 +59,35 @@ class ProviderHomeScreenData {
 class ProviderOverview {
   final int bookingRequest;
   final int calendar;
+  final int monthlyBookings;
+  final double monthlyEarnings;
 
-  ProviderOverview({required this.bookingRequest, required this.calendar});
+  ProviderOverview({
+    required this.bookingRequest,
+    required this.calendar,
+    this.monthlyBookings = 0,
+    this.monthlyEarnings = 0.0,
+  });
 
   factory ProviderOverview.fromJson(Map<String, dynamic> json) {
     return ProviderOverview(
       bookingRequest:
           json['booking_request'] ?? json['pending_bookings'] ?? 0,
       calendar: json['calendar'] ?? json['accepted_bookings'] ?? 0,
+      monthlyBookings: json['monthly_bookings'] ?? 0,
+      monthlyEarnings: (json['monthly_earnings'] is num)
+          ? (json['monthly_earnings'] as num).toDouble()
+          : double.tryParse(json['monthly_earnings']?.toString() ?? '0') ?? 0.0,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'booking_request': bookingRequest, 'calendar': calendar};
+    return {
+      'booking_request': bookingRequest,
+      'calendar': calendar,
+      'monthly_bookings': monthlyBookings,
+      'monthly_earnings': monthlyEarnings,
+    };
   }
 }
 

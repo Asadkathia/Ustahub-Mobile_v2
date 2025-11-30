@@ -3,9 +3,11 @@ import 'package:ustahub/app/modules/provider_homepage/model/provider_home_screen
 import 'package:ustahub/app/modules/provider_homepage/repository/provider_home_screen_repository.dart';
 import 'package:ustahub/components/custom_toast.dart';
 import 'package:ustahub/utils/sharedPrefHelper/sharedPrefHelper.dart';
+import 'package:ustahub/network/supabase_api_services.dart';
 
 class ProviderHomeScreenController extends GetxController {
   final _repository = ProviderHomeScreenRepository();
+  final _api = SupabaseApiServices();
 
   // Loading state
   final RxBool isLoading = false.obs;
@@ -17,16 +19,22 @@ class ProviderHomeScreenController extends GetxController {
   // Overview properties
   final RxInt bookingRequests = 0.obs;
   final RxInt calendarCount = 0.obs;
+  final RxInt monthlyBookings = 0.obs;
+  final RxDouble monthlyEarnings = 0.0.obs;
 
   // Ratings properties
   final RxInt ratingCount = 0.obs;
   final RxList<ProviderHomeRating> ratings = <ProviderHomeRating>[].obs;
   final RxString averageRating = '0.0'.obs;
 
+  // Plans count
+  final RxInt plansCount = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchProviderHomeScreenData();
+    fetchPlansCount();
   }
 
   Future<void> fetchProviderHomeScreenData() async {
@@ -51,6 +59,8 @@ class ProviderHomeScreenController extends GetxController {
           // Update individual properties for easy access
           bookingRequests.value = providerResponse.data.overview.bookingRequest;
           calendarCount.value = providerResponse.data.overview.calendar;
+          monthlyBookings.value = providerResponse.data.overview.monthlyBookings;
+          monthlyEarnings.value = providerResponse.data.overview.monthlyEarnings;
 
           ratingCount.value = providerResponse.data.ratings.ratingCount;
           ratings.value = providerResponse.data.ratings.ratings;
@@ -85,7 +95,10 @@ class ProviderHomeScreenController extends GetxController {
 
   // Refresh data
   Future<void> refreshData() async {
-    await fetchProviderHomeScreenData();
+    await Future.wait([
+      fetchProviderHomeScreenData(),
+      fetchPlansCount(),
+    ]);
   }
 
   // Get formatted average rating
@@ -103,4 +116,21 @@ class ProviderHomeScreenController extends GetxController {
 
   // Check if there are any booking requests
   bool get hasBookingRequests => bookingRequests.value > 0;
+
+  // Fetch plans count
+  Future<void> fetchPlansCount() async {
+    try {
+      final response = await _api.getProviderPlans();
+      if (response['statusCode'] == 200 &&
+          response['body'] != null &&
+          response['body']['status'] == true &&
+          response['body']['data'] != null) {
+        final plans = response['body']['data'] as List;
+        plansCount.value = plans.length;
+      }
+    } catch (e) {
+      print("[PROVIDER HOME DEBUG] ❌ Error fetching plans count: $e");
+      plansCount.value = 0;
+    }
+  }
 }

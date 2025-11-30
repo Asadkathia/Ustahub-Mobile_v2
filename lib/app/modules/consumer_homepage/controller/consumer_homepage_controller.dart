@@ -7,13 +7,22 @@ class ConsumerHomepageController extends GetxController {
     currentIndex.value = index;
   }
 
-  final servicesController = Get.put(ProviderServiceSelectionController());
+  ProviderServiceSelectionController get servicesController {
+    Get.lazyPut(() => ProviderServiceSelectionController());
+    return Get.find<ProviderServiceSelectionController>();
+  }
   final providerController = Get.find<ProviderController>();
-  final bannerController = Get.put(BannerController());
+  BannerController get bannerController {
+    Get.lazyPut(() => BannerController());
+    return Get.find<BannerController>();
+  }
   final consumerProfile = Get.find<ConsumerProfileController>();
   final providerProfile = Get.find<ProviderProfileController>();
 
-  final favouriteProvider = Get.put(FavouriteProviderController());
+  FavouriteProviderController get favouriteProvider {
+    Get.lazyPut(() => FavouriteProviderController());
+    return Get.find<FavouriteProviderController>();
+  }
 
   Future<String?> getRole() async {
     String? role = await Sharedprefhelper.getRole();

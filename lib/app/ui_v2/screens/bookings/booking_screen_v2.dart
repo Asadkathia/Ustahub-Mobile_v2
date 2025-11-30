@@ -3,13 +3,19 @@ import 'package:ustahub/app/modules/provider_completed_booking_details/view/book
 import '../../components/navigation/app_app_bar_v2.dart';
 import '../../components/tabs/custom_tab_button_v2.dart';
 import '../../components/cards/booking_card_v2.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
+import '../../components/feedback/empty_state_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
 
 class BookingScreenV2 extends StatelessWidget {
   BookingScreenV2({super.key});
-  final BookingController controller = Get.put(BookingController());
+  
+  BookingController get controller {
+    Get.lazyPut(() => BookingController());
+    return Get.find<BookingController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,10 +106,10 @@ class BookingHistoryListViewV2 extends StatelessWidget {
       if (historyController.isLoading.value) {
         return SizedBox(
           height: 590.h,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColorsV2.primary,
-            ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.md),
+            itemCount: 3,
+            itemBuilder: (_, __) => SkeletonListItemV2(),
           ),
         );
       }
@@ -139,11 +145,10 @@ class BookingHistoryListViewV2 extends StatelessWidget {
       if (historyController.isEmpty) {
         return SizedBox(
           height: 590.h,
-          child: Center(
-            child: Text(
-              AppLocalizations.of(context)!.noBookingHistoryFound,
-              style: AppTextStyles.bodyMediumSecondary,
-            ),
+          child: EmptyStateV2(
+            icon: Icons.history,
+            title: AppLocalizations.of(context)!.noBookingHistoryFound,
+            subtitle: 'Your completed bookings will appear here',
           ),
         );
       }
@@ -215,10 +220,10 @@ class NotStartedBookingViewV2 extends StatelessWidget {
       if (controller.isLoading.value) {
         return SizedBox(
           height: 590.h,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColorsV2.primary,
-            ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.md),
+            itemCount: 3,
+            itemBuilder: (_, __) => SkeletonListItemV2(),
           ),
         );
       }
@@ -279,10 +284,10 @@ class InProgressV2 extends StatelessWidget {
       if (controller.isLoading.value) {
         return SizedBox(
           height: 590.h,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColorsV2.primary,
-            ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.md),
+            itemCount: 3,
+            itemBuilder: (_, __) => SkeletonListItemV2(),
           ),
         );
       }
@@ -343,10 +348,10 @@ class CompletedBookingViewV2 extends StatelessWidget {
       if (controller.isLoading.value) {
         return SizedBox(
           height: 590.h,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColorsV2.primary,
-            ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.md),
+            itemCount: 3,
+            itemBuilder: (_, __) => SkeletonListItemV2(),
           ),
         );
       }

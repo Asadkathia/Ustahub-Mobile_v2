@@ -4,60 +4,29 @@ import 'package:ustahub/app/ui_v2/navigation/app_router_v2.dart';
 
 class ServiceSuccessView extends StatefulWidget {
   final String? title, totalAmount, bottomTitle, bookingDate, bookingTime;
-  const ServiceSuccessView({super.key, this.title, this.totalAmount, this.bottomTitle, this.bookingDate, this.bookingTime});
+  final String? bookingId, providerName, serviceName;
+  const ServiceSuccessView({
+    super.key, 
+    this.title, 
+    this.totalAmount, 
+    this.bottomTitle, 
+    this.bookingDate, 
+    this.bookingTime,
+    this.bookingId,
+    this.providerName,
+    this.serviceName,
+  });
 
   @override
   State<ServiceSuccessView> createState() => _ServiceSuccessViewState();
 }
 
 class _ServiceSuccessViewState extends State<ServiceSuccessView> {
-  int countdown = 3;
-  Timer? timer;
-
-  @override
-  void initState() {
-    super.initState();
-    startCountdown();
-  }
-
-  void startCountdown() {
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (countdown > 1) {
-        setState(() {
-          countdown--;
-        });
-      } else {
-        timer.cancel();
-        navigateToHome();
-      }
-    });
-  }
-
-  Future<void> navigateToHome() async {
-    String? role = await Sharedprefhelper.getRole();
-    if (role == null || role.isEmpty) {
-      AppRouterV2.goToNavBar(role: 'consumer');
-      return;
-    }
-    AppRouterV2.goToNavBar(role: role);
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-
-    return WillPopScope(
-      onWillPop: () async {
-        await navigateToHome();
-        return false; // Prevent default back behavior since we're navigating
-      },
-      child: Scaffold(
-        body: Padding(
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 15.w),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -66,9 +35,8 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ✅ Main Card
+                  // Main Card
                   Container(
-                    height: 480.h,
                     width: 328.w,
                     padding: EdgeInsets.symmetric(
                       horizontal: 16.w,
@@ -87,11 +55,9 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
                     ),
                     child: Column(
                       children: [
-                        SizedBox(
-                          height: 50.h,
-                        ), // enough space for circle to overlap
+                        SizedBox(height: 50.h), // Space for circle icon
                         Text(
-                          "Great",
+                          "Great!",
                           style: GoogleFonts.ubuntu(
                             color: Colors.green,
                             fontSize: 16.sp,
@@ -100,59 +66,103 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          widget.title ?? "Your service successfully done",
+                          widget.title ?? "Your booking was successful!",
                           style: GoogleFonts.ubuntu(
                             fontWeight: FontWeight.w600,
                             fontSize: 15.sp,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 10.h),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            "Redirecting in ${countdown}s...",
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 12.sp,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
+                        SizedBox(height: 20.h),
+                        
+                        // Booking Summary
+                        if (widget.bookingId != null) ...[
+                          _rowItem("Booking ID", widget.bookingId!),
+                          SizedBox(height: 8.h),
+                        ],
+                        if (widget.providerName != null) ...[
+                          _rowItem("Provider", widget.providerName!),
+                          SizedBox(height: 8.h),
+                        ],
+                        if (widget.serviceName != null) ...[
+                          _rowItem("Service", widget.serviceName!),
+                          SizedBox(height: 8.h),
+                        ],
+                        _rowItem("Booking Date", formatDate(widget.bookingDate)),
+                        SizedBox(height: 8.h),
+                        _rowItem("Booking Time", formatTime(widget.bookingTime)),
+                        if (widget.totalAmount != null) ...[
+                          SizedBox(height: 8.h),
+                          _rowItem("Total Amount", "\$${widget.totalAmount}"),
+                        ],
+                        
+                        SizedBox(height: 30.h),
+                        CustomDottedLine(),
+                        SizedBox(height: 30.h),
+                        
+                        // Action Buttons
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              // Navigate to BookingScreenV2
+                              String? role = await Sharedprefhelper.getRole();
+                              if (role == null || role.isEmpty) {
+                                role = 'consumer';
+                              }
+                              AppRouterV2.goToNavBar(role: role, initialIndex: 2); // Bookings tab
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            child: Text(
+                              "View Booking",
+                              style: GoogleFonts.ubuntu(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                        SizedBox(height: 20.h),
-
-                        _rowItem("Booking Status", "Done"),
-                        // _rowItem("Total Amount", "\$${widget.totalAmount ?? 799}"),
-                        _rowItem("Booking Date", formatDate(widget.bookingDate)),
-                        _rowItem("Booking Time", getCurrentTimeHHmm()),
-
- 
-                        30.ph,
-                        CustomDottedLine(),
-                        30.ph,
-      
-                        // Text(
-                        //   widget.bottomTitle ?? "You earn this service",
-                        //   style: GoogleFonts.ubuntu(fontSize: 14.sp),
-                        // ),
-                        // SizedBox(height: 6.h),
-                        // Text(
-                        //   "\$${widget.totalAmount}",
-                        //   style: GoogleFonts.ubuntu(
-                        //     fontSize: 18.sp,
-                        //     fontWeight: FontWeight.bold,
-                        //     color: Colors.green,
-                        //   ),
-                        // ),
+                        SizedBox(height: 12.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              // Navigate to Chat Screen
+                              String? role = await Sharedprefhelper.getRole();
+                              if (role == null || role.isEmpty) {
+                                role = 'consumer';
+                              }
+                              AppRouterV2.goToNavBar(role: role, initialIndex: 1); // Chat tab
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              side: BorderSide(color: Colors.green),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            child: Text(
+                              "Chat with Provider",
+                              style: GoogleFonts.ubuntu(
+                                color: Colors.green,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-      
-                  // ✅ Positioned Circle Icon
+                  
+                  // Positioned Circle Icon
                   Positioned(
                     top: -55.h,
                     left: 0,
@@ -180,6 +190,15 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
       ),
     );
   }
+  
+  String formatTime(String? time) {
+    if (time == null || time.isEmpty) return getCurrentTimeHHmm();
+    // If time is already in HH:mm format, convert to 12-hour
+    if (time.contains(':')) {
+      return convertTo12HourFormat(time);
+    }
+    return time;
+  }
 
   // Widget for reusable row
   Widget _rowItem(String title, String value) {
@@ -204,10 +223,8 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
       ),
     );
   }
-}
-
-
- String formatDate(String? date) {
+  
+  String formatDate(String? date) {
     if (date == null || date.isEmpty) return "-";
     try {
       final d = DateTime.parse(date);
@@ -221,6 +238,5 @@ class _ServiceSuccessViewState extends State<ServiceSuccessView> {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return months[(month - 1).clamp(0, 11)];
   }
-
-
+}
  
