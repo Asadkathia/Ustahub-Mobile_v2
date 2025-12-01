@@ -69,22 +69,29 @@ class _NavBarV2State extends State<NavBarV2> {
     }
 
     List<Widget> pages = [
-      widget.role == "consumer" 
-        ? (UIConfig.useNewHomeScreen ? HomeScreenV2() : ConsumerHomepage())
-        : widget.role == "provider" 
-          ? (UIConfig.useNewProviderHome ? ProviderHomeScreenV2() : ProviderHomepageView())
-          : (UIConfig.useNewHomeScreen ? HomeScreenV2() : ConsumerHomepage()), // Guests see new home screen
-      widget.role == "guest" 
-        ? LoginRequiredScreenV2(feature: "Chat")
-        : (UIConfig.useNewChat ? ChatScreenV2() : const BookingChatListPage()),
-      widget.role == "consumer" 
-        ? (UIConfig.useNewBookings ? BookingScreenV2() : BookingView())
-        : widget.role == "provider"
-          ? (UIConfig.useNewBookings ? ProviderBookingScreenV2() : ProviderBookingView())
-          : LoginRequiredScreenV2(feature: "Bookings"),
+      // Home
+      widget.role == "consumer"
+          ? const HomeScreenV2()
+          : widget.role == "provider"
+              ? const ProviderHomeScreenV2()
+              : const HomeScreenV2(), // Guest sees consumer home v2
+
+      // Chat
       widget.role == "guest"
-        ? GuestAccountScreenV2()
-        : (UIConfig.useNewAccount ? AccountScreenV2(role: widget.role) : AccountView(role: widget.role)),
+          ? const LoginRequiredScreenV2(feature: "Chat")
+          : ChatScreenV2(),
+
+      // Bookings
+      widget.role == "consumer"
+          ? BookingScreenV2()
+          : widget.role == "provider"
+              ? ProviderBookingScreenV2()
+              : const LoginRequiredScreenV2(feature: "Bookings"),
+
+      // Account
+      widget.role == "guest"
+          ? const GuestAccountScreenV2()
+          : AccountScreenV2(role: widget.role),
     ];
 
     return Obx(

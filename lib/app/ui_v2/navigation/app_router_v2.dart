@@ -15,9 +15,8 @@ class AppRouterV2 {
     required String role,
     int initialIndex = 0,
   }) {
-    return UIConfig.useNewNavBar
-        ? NavBarV2(role: role, initialIndex: initialIndex)
-        : NavBar(role: role, initialIndex: initialIndex);
+    // Always use v2 NavBar
+    return NavBarV2(role: role, initialIndex: initialIndex);
   }
 
   // Route to new UI screens
