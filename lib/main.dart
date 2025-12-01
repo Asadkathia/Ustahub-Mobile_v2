@@ -134,7 +134,7 @@ class MainApp extends StatelessWidget {
         builder:
             (_, __) => GetMaterialApp(
               debugShowCheckedModeBanner: false,
-              theme: UIConfig.useNewUI ? AppThemeV2.theme : AppTheme.appTheme,
+              theme: AppThemeV2.theme,
               locale: Locale(initialLocale),
               supportedLocales: const [
                 Locale('en'),
@@ -151,7 +151,7 @@ class MainApp extends StatelessWidget {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              home: UIConfig.useNewSplash ? const SplashScreenV2() : SplashScreen(),
+              home: const SplashScreenV2(),
             ),
       ),
     );

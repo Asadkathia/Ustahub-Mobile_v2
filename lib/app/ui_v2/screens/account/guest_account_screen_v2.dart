@@ -58,11 +58,8 @@ class GuestAccountScreenV2 extends StatelessWidget {
                   SecondaryButtonV2(
                     text: "Login as a service provider",
                     onPressed: () {
-                      if (UIConfig.useNewLogin) {
-                        Get.offAll(() => LoginScreenV2(role: "provider"));
-                      } else {
-                        Get.offAll(() => LoginView(role: "provider"));
-                      }
+                      // Always use V2 login
+                      Get.offAll(() => LoginScreenV2(role: "provider"));
                     },
                   ),
                   SizedBox(height: 16.h),
@@ -70,11 +67,8 @@ class GuestAccountScreenV2 extends StatelessWidget {
                   PrimaryButtonV2(
                     text: "Login as a Consumer",
                     onPressed: () {
-                      if (UIConfig.useNewLogin) {
-                        Get.offAll(() => LoginScreenV2(role: "consumer"));
-                      } else {
-                        Get.offAll(() => LoginView(role: "consumer"));
-                      }
+                      // Always use V2 login
+                      Get.offAll(() => LoginScreenV2(role: "consumer"));
                     },
                   ),
                   SizedBox(height: 24.h),

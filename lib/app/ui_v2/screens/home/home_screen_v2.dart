@@ -155,11 +155,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         hintText: AppLocalizations.of(context)!.search,
         readOnly: true,
         onTap: () {
-          if (UIConfig.useNewUI) {
-            Get.to(() => SearchScreenV2());
-          } else {
-            Get.to(() => SearchView());
-          }
+          Get.to(() => SearchScreenV2());
         },
         onFilterTap: () => Get.to(() => const AdvancedSearchScreenV2()),
       ),
@@ -666,7 +662,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
               ),
               TextButton(
                 onPressed: () {
-                  // Navigate to all providers
+                  // TODO: Implement \"view all\" for recommended providers in v2
                 },
                 child: Text(
                   AppLocalizations.of(context)!.viewAll,
@@ -733,11 +729,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
       rating: double.tryParse(data.averageRating?.toString() ?? '0') ?? 0,
       location: data.bio ?? '',
       onTap: () {
-        if (UIConfig.useNewUI) {
-          Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
-        } else {
-          Get.to(() => ProviderDetailsScreen(id: data.id.toString()));
-        }
+        Get.to(() => ProviderDetailsScreenV2(id: data.id.toString()));
       },
     );
   }

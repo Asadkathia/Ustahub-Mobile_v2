@@ -360,39 +360,26 @@ class _CheckoutModalBottomSheetState extends State<CheckoutModalBottomSheet> {
                     final selectedAddress = addressController.addressList.first;
                     final addressId = selectedAddress.id;
                     if (addressId == null || addressId.isEmpty) {
-                      CustomToast.error("Address ID is missing. Please select a valid address.");
+                      CustomToast.error(
+                        "Address ID is missing. Please select a valid address.",
+                      );
                       return;
                     }
-                    // Use V2 booking summary screen
-                    if (UIConfig.useNewUI) {
-                      Get.to(
-                        BookingSummaryScreenV2(
-                          note: controller.noteController.value.text,
-                          addressId: addressId,
-                          bookingDate: controller.selectedYmdDate.value,
-                          bookingTime: controller.selectedTime.value,
-                          serviceId: widget.serviceId,
-                          serviceName: controller.selectedServiceName.value,
-                          fullAddress:
-                              "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
-                          providerId: widget.providerId,
-                        ),
-                      );
-                    } else {
-                      Get.to(
-                        BookingSummaryView(
-                          note: controller.noteController.value.text,
-                          addressId: addressId,
-                          bookingDate: controller.selectedYmdDate.value,
-                          bookingTime: controller.selectedTime.value,
-                          serviceId: widget.serviceId,
-                          serviceName: controller.selectedServiceName.value,
-                          fullAddress:
-                              "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
-                          providerId: widget.providerId,
-                        ),
-                      );
-                    }
+
+                    // Always use V2 booking summary screen
+                    Get.to(
+                      BookingSummaryScreenV2(
+                        note: controller.noteController.value.text,
+                        addressId: addressId,
+                        bookingDate: controller.selectedYmdDate.value,
+                        bookingTime: controller.selectedTime.value,
+                        serviceId: widget.serviceId,
+                        serviceName: controller.selectedServiceName.value,
+                        fullAddress:
+                            "${selectedAddress.addressLine1 ?? ''}, ${selectedAddress.city ?? ''}, ${selectedAddress.state ?? ''}, ${selectedAddress.country ?? ''} - ${selectedAddress.postalCode ?? ''}",
+                        providerId: widget.providerId,
+                      ),
+                    );
                   }
                 },
                 title: AppLocalizations.of(context)!.proceedToCheckout,

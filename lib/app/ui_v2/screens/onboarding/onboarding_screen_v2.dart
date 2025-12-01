@@ -234,12 +234,8 @@ class OnboardingScreenV2 extends StatelessWidget {
             onPressed: () async {
               await Sharedprefhelper.setSharedPrefHelper('hasSeenOnboarding', 'true');
               await Sharedprefhelper.setSharedPrefHelper('userMode', 'provider');
-              print("[ONBOARDING_V2] Navigating to login - useNewLogin: ${UIConfig.useNewLogin}");
-            if (UIConfig.useNewLogin) {
-                Get.offAll(() => LoginScreenV2(role: "provider"));
-              } else {
-                Get.offAll(() => LoginView(role: "provider"));
-              }
+              // Always use V2 login
+              Get.offAll(() => LoginScreenV2(role: "provider"));
             },
           ),
           SizedBox(height: AppSpacing.mdVertical),
@@ -249,12 +245,8 @@ class OnboardingScreenV2 extends StatelessWidget {
             onPressed: () async {
               await Sharedprefhelper.setSharedPrefHelper('hasSeenOnboarding', 'true');
               await Sharedprefhelper.setSharedPrefHelper('userMode', 'consumer');
-              print("[ONBOARDING_V2] Navigating to login - useNewLogin: ${UIConfig.useNewLogin}");
-              if (UIConfig.useNewLogin) {
-                Get.offAll(() => LoginScreenV2(role: "consumer"));
-              } else {
-                Get.offAll(() => LoginView(role: "consumer"));
-              }
+              // Always use V2 login
+              Get.offAll(() => LoginScreenV2(role: "consumer"));
             },
           ),
           SizedBox(height: AppSpacing.mdVertical),

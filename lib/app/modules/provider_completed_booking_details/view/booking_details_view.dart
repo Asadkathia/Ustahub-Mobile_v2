@@ -70,22 +70,8 @@ class _BookingDetailsViewState extends State<BookingDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    if (UIConfig.useNewUI) {
-      return _buildV2Scaffold();
-    }
-    return WillPopScope(
-      onWillPop: () async => true,
-      child: Scaffold(
-        floatingActionButton: _buildChatButton(),
-        backgroundColor: AppColors.background,
-        body: Obx(
-          () =>
-              controller.isLoading.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildContent(),
-        ),
-      ),
-    );
+    // Always use V2 scaffold for booking details
+    return _buildV2Scaffold();
   }
 
   Widget _buildV2Scaffold() {
