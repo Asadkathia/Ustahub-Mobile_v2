@@ -13,6 +13,8 @@ import 'favourite_providers_screen_v2.dart';
 import 'manage_address_screen_v2.dart';
 import 'wallet_screen_v2.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
+import '../../components/cards/app_card.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
@@ -52,9 +54,9 @@ class AccountScreenV2 extends StatelessWidget {
                 providerProfileController,
               ),
               SizedBox(height: AppSpacing.lgVertical),
-              role == "consumer" 
-                ? SettingsMenuV2() 
-                : SettingsMenuForProviderV2(),
+              role == "consumer"
+                  ? SettingsMenuV2()
+                  : SettingsMenuForProviderV2(),
               SizedBox(height: AppSpacing.xlVertical),
             ],
           ),
@@ -77,19 +79,26 @@ class AccountScreenV2 extends StatelessWidget {
   Widget _buildConsumerProfile(ConsumerProfileController controller) {
     return Obx(() {
       if (controller.isLoading.value) {
-        return Center(
-          child: CircularProgressIndicator(
-            color: AppColorsV2.primary,
-          ),
-        );
+        return const SkeletonListItemV2(height: 96);
       }
 
       final user = controller.userProfile.value;
       if (user == null) {
-        return Center(
-          child: Text(
-            'Failed to load profile',
-            style: AppTextStyles.bodyMediumSecondary,
+        return AppCard(
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: AppColorsV2.error,
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Failed to load profile',
+                  style: AppTextStyles.bodyMediumSecondary,
+                ),
+              ),
+            ],
           ),
         );
       }
@@ -104,19 +113,26 @@ class AccountScreenV2 extends StatelessWidget {
   Widget _buildProviderProfile(ProviderProfileController controller) {
     return Obx(() {
       if (controller.isLoading.value) {
-        return Center(
-          child: CircularProgressIndicator(
-            color: AppColorsV2.primary,
-          ),
-        );
+        return const SkeletonListItemV2(height: 96);
       }
 
       final user = controller.userProfile.value;
       if (user == null) {
-        return Center(
-          child: Text(
-            'Failed to load profile',
-            style: AppTextStyles.bodyMediumSecondary,
+        return AppCard(
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: AppColorsV2.error,
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Failed to load profile',
+                  style: AppTextStyles.bodyMediumSecondary,
+                ),
+              ),
+            ],
           ),
         );
       }
@@ -142,19 +158,8 @@ class AccountScreenV2 extends StatelessWidget {
       avatarUrl = blankProfileImage;
     }
 
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -220,38 +225,26 @@ class SettingsMenuV2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.mdVertical),
-        child: Column(
-          children: [
-            SettingsTileV2(
+    return AppCard(
+      enableShadow: true,
+      child: Column(
+        children: [
+          SettingsTileV2(
               icon: Icons.location_on_outlined,
               title: AppLocalizations.of(context)!.manageAddress,
               onTap: () => Get.to(() => ManageAddressScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.favorite_border,
               title: AppLocalizations.of(context)!.favouriteProviders,
               onTap: () => Get.to(() => FavouriteProvidersScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.language,
               title: AppLocalizations.of(context)!.languge,
               onTap: () => Get.to(() => LanguageScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.star_border,
               title: AppLocalizations.of(context)!.rateUs,
               onTap: () {
@@ -267,12 +260,12 @@ class SettingsMenuV2 extends StatelessWidget {
                 );
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.wallet_rounded,
               title: AppLocalizations.of(context)!.wallet,
               onTap: () => Get.to(() => const WalletScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.delete,
               title: AppLocalizations.of(context)!.deleteAccount,
               onTap: () {
@@ -286,7 +279,7 @@ class SettingsMenuV2 extends StatelessWidget {
                 );
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.logout,
               title: AppLocalizations.of(context)!.logout,
               onTap: () {
@@ -304,8 +297,7 @@ class SettingsMenuV2 extends StatelessWidget {
                 }
               },
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -318,52 +310,40 @@ class SettingsMenuForProviderV2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.mdVertical),
-        child: Column(
-          children: [
-            SettingsTileV2(
+    return AppCard(
+      enableShadow: true,
+      child: Column(
+        children: [
+          SettingsTileV2(
               icon: Icons.location_on_outlined,
               title: AppLocalizations.of(context)!.manageAddress,
               onTap: () => Get.to(() => ManageAddressScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.settings_input_svideo_sharp,
               title: AppLocalizations.of(context)!.myService,
               onTap: () {
                 Get.to(() => MyServiceView());
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.edit_document,
               title: AppLocalizations.of(context)!.documents,
               onTap: () {
                 Get.to(() => ProviderDocumentView());
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.wallet_rounded,
               title: AppLocalizations.of(context)!.wallet,
               onTap: () => Get.to(() => const WalletScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.language,
               title: AppLocalizations.of(context)!.languge,
               onTap: () => Get.to(() => LanguageScreenV2()),
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.star_border,
               title: AppLocalizations.of(context)!.rateUs,
               onTap: () {
@@ -379,7 +359,7 @@ class SettingsMenuForProviderV2 extends StatelessWidget {
                 );
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.delete,
               title: AppLocalizations.of(context)!.deleteAccount,
               onTap: () {
@@ -393,7 +373,7 @@ class SettingsMenuForProviderV2 extends StatelessWidget {
                 );
               },
             ),
-            SettingsTileV2(
+          SettingsTileV2(
               icon: Icons.logout,
               title: AppLocalizations.of(context)!.logout,
               onTap: () {
@@ -411,8 +391,7 @@ class SettingsMenuForProviderV2 extends StatelessWidget {
                 }
               },
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:ustahub/app/modules/common_model_class/ProviderListModelClass.da
 import '../../components/cards/recommendation_card_v2.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
 import '../../components/feedback/empty_state_v2.dart';
+import '../../components/inputs/app_search_field.dart';
+import '../../components/cards/app_card.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/spacing/app_spacing.dart';
 import '../../design_system/typography/app_text_styles.dart';
@@ -45,43 +47,17 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: AppSpacing.mdVertical),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: searchTextController,
-                    decoration: InputDecoration(
-                      hintText: 'Search services or providers',
-                      prefixIcon: const Icon(Icons.search),
-                      fillColor: AppColorsV2.inputBackground,
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (value) => _performSearch(value),
-                  ),
-                ),
-                SizedBox(width: AppSpacing.sm),
-                IconButton(
-                  icon: Icon(
-                    Icons.tune,
-                    color: AppColorsV2.primary,
-                  ),
-                  onPressed: () {
-                    Get.to(() => AdvancedSearchScreenV2(
+            AppSearchField(
+              controller: searchTextController,
+              hintText: 'Search services or providers',
+              onSubmitted: () => _performSearch(searchTextController.text),
+              onFilterTap: () {
+                Get.to(() => AdvancedSearchScreenV2(
                       initialKeyword: searchTextController.text.trim().isEmpty
                           ? null
                           : searchTextController.text.trim(),
                     ));
-                  },
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColorsV2.primaryLight.withOpacity(0.1),
-                    padding: EdgeInsets.all(AppSpacing.md),
-                  ),
-                ),
-              ],
+              },
             ),
             SizedBox(height: AppSpacing.mdVertical),
             Row(
@@ -115,14 +91,21 @@ class _SearchScreenV2State extends State<SearchScreenV2> {
                     itemCount: controller.searches.length,
                     itemBuilder: (_, index) {
                       final item = controller.searches[index];
-                      return ListTile(
-                        leading: const Icon(Icons.history),
-                        title: Text(item.keyword),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => controller.deleteSearch(item.id!),
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: AppSpacing.smVertical),
+                        child: AppCard(
+                          bordered: true,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.history),
+                            title: Text(item.keyword),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => controller.deleteSearch(item.id!),
+                            ),
+                            onTap: () => _performSearch(item.keyword),
+                          ),
                         ),
-                        onTap: () => _performSearch(item.keyword),
                       );
                     },
                   ),

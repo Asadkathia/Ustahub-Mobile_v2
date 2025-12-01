@@ -135,7 +135,9 @@ class _NavBarState extends State<NavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final navController = Get.put(NavBarController());
+    final navController = Get.isRegistered<NavBarController>()
+        ? Get.find<NavBarController>()
+        : Get.put(NavBarController());
 
     // Set initial index if provided (e.g., from Edit Profile)
     if (widget.initialIndex != null) {

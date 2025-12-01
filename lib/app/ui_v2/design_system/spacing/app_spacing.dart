@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppSpacing {
@@ -29,6 +30,12 @@ class AppSpacing {
   static double get screenPadding => 20.w;
   static double get screenPaddingHorizontal => 20.w;
   static double get screenPaddingVertical => 20.h;
+  static EdgeInsets get pagePadding =>
+      EdgeInsets.symmetric(horizontal: screenPaddingHorizontal, vertical: 0);
+  static EdgeInsets get pagePaddingVertical =>
+      EdgeInsets.symmetric(vertical: screenPaddingVertical);
+  static EdgeInsets get sectionPadding =>
+      EdgeInsets.symmetric(horizontal: screenPaddingHorizontal);
   
   // Component Spacing
   static double get componentPadding => 16.w;
@@ -45,6 +52,11 @@ class AppSpacing {
   // Card Spacing
   static double get cardPadding => 16.w;
   static double get cardMargin => 12.w;
+  static EdgeInsets get cardPaddingInsets =>
+      EdgeInsets.all(cardPadding);
+  static double get sectionSpacing => 28.h;
+  static double get listSpacing => 16.h;
+  static double get gridSpacing => 14.w;
   
   // Border Radius
   static double get radiusSmall => 8.r;

@@ -63,18 +63,15 @@ void main() async {
 
 void initializeDependencyInjection(String? token, {String ? fcmToken}) {
   Get.put(LanguageController(), permanent: true);
-  Get.put(FilterController());
-  Get.put(
-    NavBarController(),
-  ); // Add NavBarController to global dependency injection
+  Get.lazyPut(() => FilterController());
+  Get.lazyPut(() => NavBarController());
 
   if (token != null && token.isNotEmpty) {
     print("[MAIN_APP DEBUG] 🎯 User is logged in, initializing services...");
-    Get.put(BannerController());
-
-    Get.put(BookingRequestController());
-    Get.put(ProviderController());
-    Get.put(CheckoutController());
+    Get.lazyPut(() => BannerController());
+    Get.lazyPut(() => BookingRequestController());
+    Get.lazyPut(() => ProviderController());
+    Get.lazyPut(() => CheckoutController());
     print("[MAIN_APP DEBUG] ✅ All services initialized successfully");
   } else {
     print("[MAIN_APP DEBUG] ❌ No token found, user not logged in");

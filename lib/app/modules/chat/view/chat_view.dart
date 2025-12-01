@@ -1,6 +1,12 @@
 import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/chat/controller/chat_controller.dart';
 import 'package:ustahub/app/modules/chat/model/chat_model.dart';
+import 'package:ustahub/app/ui_v2/components/navigation/app_app_bar_v2.dart';
+import 'package:ustahub/app/ui_v2/components/cards/app_card.dart';
+import 'package:ustahub/app/ui_v2/components/feedback/empty_state_v2.dart';
+import 'package:ustahub/app/ui_v2/design_system/colors/app_colors_v2.dart';
+import 'package:ustahub/app/ui_v2/design_system/spacing/app_spacing.dart';
+import 'package:ustahub/app/ui_v2/design_system/typography/app_text_styles.dart';
 
 class BookingChatPage extends StatefulWidget {
   final String bookingId;
@@ -41,7 +47,8 @@ class _BookingChatPageState extends State<BookingChatPage> {
   }
 
   Future<void> _send() async {
-    final text = _textController.text;
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
     _textController.clear();
     await _controller.sendMessage(
       bookingId: widget.bookingId,
@@ -52,20 +59,20 @@ class _BookingChatPageState extends State<BookingChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.counterpartyName),
-            Text(
-              widget.bookingNumber,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.white70),
+      backgroundColor: AppColorsV2.background,
+      appBar: AppAppBarV2(
+        title: widget.counterpartyName,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: AppSpacing.sm),
+            child: Center(
+              child: Text(
+                widget.bookingNumber,
+                style: AppTextStyles.captionSmall,
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -81,8 +88,10 @@ class _BookingChatPageState extends State<BookingChatPage> {
 
                 final messages = snapshot.data ?? const [];
                 if (messages.isEmpty) {
-                  return const Center(
-                    child: Text('No messages yet. Start the conversation!'),
+                  return EmptyStateV2(
+                    icon: Icons.chat_bubble_outline,
+                    title: 'No messages yet',
+                    subtitle: 'Start the conversation with a quick hello.',
                   );
                 }
 
@@ -95,39 +104,33 @@ class _BookingChatPageState extends State<BookingChatPage> {
                     final msg = messages[index];
                     final mine = msg.isMine(myId);
                     return Align(
-                      alignment: mine
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
+                      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                        margin: EdgeInsets.symmetric(vertical: AppSpacing.xsVertical),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.smVertical,
                         ),
                         decoration: BoxDecoration(
-                          color: mine
-                              ? AppColors.green
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
+                          color: mine ? AppColorsV2.primary : AppColorsV2.surface,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               msg.text,
-                              style: TextStyle(
-                                color: mine ? Colors.white : Colors.black87,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: mine ? AppColorsV2.textOnPrimary : AppColorsV2.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: AppSpacing.xsVertical),
                             Text(
-                              TimeOfDay.fromDateTime(msg.createdAt)
-                                  .format(context),
-                              style: TextStyle(
-                                fontSize: 10,
+                              TimeOfDay.fromDateTime(msg.createdAt).format(context),
+                              style: AppTextStyles.captionSmall.copyWith(
                                 color: mine
-                                    ? Colors.white70
-                                    : Colors.grey.shade600,
+                                    ? AppColorsV2.textOnPrimary.withOpacity(0.7)
+                                    : AppColorsV2.textSecondary,
                               ),
                             ),
                           ],
@@ -141,30 +144,32 @@ class _BookingChatPageState extends State<BookingChatPage> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPaddingHorizontal,
+                vertical: AppSpacing.smVertical,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(),
+              child: AppCard(
+                bordered: true,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _textController,
+                        minLines: 1,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          hintText: 'Type a message...',
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    color: AppColors.green,
-                    onPressed: _send,
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      color: AppColorsV2.primary,
+                      onPressed: _send,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

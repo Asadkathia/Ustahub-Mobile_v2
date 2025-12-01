@@ -1,312 +1,81 @@
-<!-- f4e3c254-8abe-4c3e-a794-cbcd2edbdba9 5d0abf13-7ef2-49e7-a0da-c40c37713eb4 -->
-# Roadmap A: Core Improvements Implementation Plan
+<!-- f4e3c254-8abe-4c3e-a794-cbcd2edbdba9 efbbcd1c-cab4-473a-a8be-c96038d1e456 -->
+# Roadmap B – UI/UX Enhancements
 
-## Overview
+## 1. Finalize Design System Foundations
 
-Implement core improvements across booking flow, trust & safety, architecture, and provider tools. All changes preserve existing business logic and Supabase schema.
-
----
-
-## P1 – Booking Funnel, Trust & Safety
-
-### 1.1 Improve Booking Flow UX
+- Review and adjust colors/typography/spacing themes in [`lib/app/ui_v2/design_system`](lib/app/ui_v2/design_system) to ensure consistent radii, shadows, paddings, and text styles.
+- Add any missing shared text styles (titles/subtitles/body/caption) and spacing constants so downstream screens can rely on them.
 
-**File: `lib/app/ui_v2/screens/booking/booking_summary_screen_v2.dart`**
+## 2. Normalize Core Components
 
-- Add price breakdown section showing:
-  - `service_price` (from selected plan)
-  - `service_fee` (from booking data)
-  - `visit_fee` / `visiting_charge` (from booking data)
-  - `total_amount` (calculated sum)
-- Group information into clear sections:
-  - Provider info (existing card)
-  - Service & Address/Time (existing card)
-  - **NEW**: Price Breakdown card
-- Add loading state to "Confirm" button (already has `isLoading` but ensure it's properly displayed)
+- Audit `lib/app/ui_v2/components` for buttons, cards, inputs, feedback widgets.
+- Create/extend reusable widgets (AppCard, AppSearchField, AppEmptyState, Skeleton loaders, etc.) so screens stop using ad‑hoc Containers.
+- Ensure components consume AppColorsV2, AppTextStyles, AppSpacing.
 
-**File: `lib/app/modules/service_success/view/service_success_view.dart`**
+## 3. Refactor Priority Screens (P1)
 
-- Replace countdown auto-navigation with action buttons:
-  - "View Booking" button → Navigate to `BookingScreenV2` with booking ID
-  - "Chat with Provider" button → Navigate to chat screen
-- Display booking ID prominently
-- Show booking summary (provider name, service, date/time)
-- Remove auto-redirect timer (keep manual navigation only)
+### 3.1 Home Screens
 
-**File: `lib/app/modules/booking_summary/controller/booking_summary_controller.dart`**
+- Consumer: Rebuild sections in [`home_screen_v2.dart`](lib/app/ui_v2/screens/home/home_screen_v2.dart) using the standardized search field, cards, and spacing.
+- Provider: Update [`provider_home_screen_v2.dart`](lib/app/ui_v2/screens/home/provider_home_screen_v2.dart) so KPIs, nudges, and lists share the same card/typography system.
 
-- Modify `bookService()` to return booking ID after successful creation
-- Pass booking ID to `ServiceSuccessView`
+### 3.2 Provider Details
 
-### 1.2 Make Advanced Search Discoverable
+- In [`provider_details_screen_v2.dart`](lib/app/ui_v2/screens/provider/provider_details_screen_v2.dart), wrap all sections (header, services, trust signals, reviews) with AppCards and consistent typography while keeping logic untouched.
 
-**File: `lib/app/ui_v2/screens/search/advanced_search_screen_v2.dart`** (CREATE NEW)
+### 3.3 Booking Summary
 
-- Create new screen with filter options:
-  - Price range slider
-  - Rating filter
-  - Distance filter
-  - Service category filter
-  - Sort options (rating, price, distance, reviews)
-  - Verified only toggle
-- Integrate with existing `ProviderController.searchProviders()` or create new search method
-- Display results using `ProvidersListScreenV2`
+- Align [`booking_summary_screen_v2.dart`](lib/app/ui_v2/screens/booking/booking_summary_screen_v2.dart) sections (provider info, booking details, price breakdown) with shared cards and bottom CTA styling.
 
-**File: `lib/app/ui_v2/screens/search/search_screen_v2.dart`**
+### 3.4 Search & Advanced Search
 
-- Add filter icon button next to search field
-- Icon: `Icons.tune` or `Icons.filter_list`
-- On tap: Navigate to `AdvancedSearchScreenV2`
+- Update [`search_screen_v2.dart`](lib/app/ui_v2/screens/search/search_screen_v2.dart) and [`advanced_search_screen_v2.dart`](lib/app/ui_v2/screens/search/advanced_search_screen_v2.dart) to use AppSearchField, chip/chip-like filters, and consistent empty states.
 
-**File: `lib/app/ui_v2/screens/home/home_screen_v2.dart`**
+### 3.5 Chat UI
 
-- Add filter icon button in search bar (next to search icon)
-- On tap: Navigate to `AdvancedSearchScreenV2`
-- Remove long-press gesture (already removed per user edits)
+- Apply unified list/card styles in chat list/detail screens under `lib/app/ui_v2/screens/chat/`, ensuring message bubbles and list items follow the design system.
 
-### 1.3 Add Trust Signals in Provider Details
+## 4. Refactor Secondary Screens (P2)
 
-**File: `lib/app/ui_v2/screens/provider/provider_details_screen_v2.dart`**
+- Tidy account/profile/auth flows (e.g., [`account_screen_v2.dart`](lib/app/ui_v2/screens/account/account_screen_v2.dart), favourites, addresses) using the same components and spacing rules.
 
-- Add trust signals section after provider header:
-  - "Member since YEAR" - Extract year from `overview.registeredSince` or `provider.created_at`
-  - "Hired X times" - Display `overview.totalBookings` (completed_bookings)
-  - Verified badge - Show if `provider.isVerified == true` (use existing badge component or create simple chip)
-  - City/Region - Display `overview.city` prominently
-- Place trust signals between `_ProviderHeader` and `_buildRatingSummary`
-- Use consistent card styling with existing sections
+## 5. Polish Remaining Screens (P3)
 
-### 1.4 Strengthen Authentication & Role Guards
+- Apply design-system styling to onboarding, splash, help, and other auxiliary flows once core screens are complete.
 
-**Files to modify:**
-
-- `lib/app/modules/booking_summary/controller/booking_summary_controller.dart`
-- `lib/app/modules/chat/controller/chat_controller.dart` (if exists)
-- `lib/app/modules/favourite_providers/controller/favourite_provider_controller.dart`
-- Any consumer-specific action controllers
-
-**Implementation:**
-
-- Add `_checkAuth()` helper method:
-  ```dart
-  Future<bool> _checkAuth({required String requiredRole}) async {
-    final userId = SupabaseClientService.currentUserId;
-    if (userId == null) {
-      Get.to(() => LoginRequiredScreenV2(feature: 'Booking'));
-      return false;
-    }
-    final role = await Sharedprefhelper.getRole();
-    if (requiredRole == 'consumer' && role != 'consumer') {
-      CustomToast.error('This feature is only available for consumers');
-      return false;
-    }
-    if (requiredRole == 'provider' && role != 'provider') {
-      CustomToast.error('This feature is only available for providers');
-      return false;
-    }
-    return true;
-  }
-  ```
-
-- Call `_checkAuth()` at start of critical methods (e.g., `bookService()`, `addToFavorites()`)
-
-### 1.5 Supabase RLS Safety Patterns
-
-**File: `lib/network/supabase_api_services.dart`**
-
-- Review all methods to ensure they use `SupabaseClientService.currentUserId` instead of manual userId parameters
-- Add defensive checks: `if (userId == null) return _handleError('User not authenticated', statusCode: 401);`
-- Ensure booking/chat endpoints validate `auth.uid()` matches the user making the request
-
----
-
-## P2 – Architecture & Performance
-
-### 2.1 Split SupabaseApiServices
-
-**Create new directory: `lib/network/supabase_services/`**
-
-**File: `lib/network/supabase_services/user_supabase_service.dart`** (CREATE)
-
-- Move user-related methods:
-  - `getProfile()`
-  - `updateProfile()`
-  - `getProviderProfile()`
-  - `updateProviderProfile()`
-  - Any user profile operations
-
-**File: `lib/network/supabase_services/provider_supabase_service.dart`** (CREATE)
-
-- Move provider-related methods:
-  - `getProviderById()`
-  - `getProviders()`
-  - `searchProviders()`
-  - Any provider listing/search operations
-
-**File: `lib/network/supabase_services/booking_supabase_service.dart`** (CREATE)
-
-- Move booking-related methods:
-  - `createBooking()`
-  - `getBookings()`
-  - `updateBookingStatus()`
-  - Any booking operations
-
-**File: `lib/network/supabase_api_services.dart`** (MODIFY)
-
-- Keep as facade/wrapper that delegates to specific services
-- Maintain backward compatibility by importing and re-exporting methods
-- Or: Update all repository files to import from specific services
-
-**Note:** This is a large refactor. Consider doing it incrementally:
-
-1. Create new service files
-2. Move methods one category at a time
-3. Update imports in repositories
-4. Test after each category
-
-### 2.2 Convert Heavy Controllers to Lazy Load
-
-**Files to modify:**
-
-- `lib/app/modules/common_controller.dart/provider_controller.dart` - Change `Get.put()` to `Get.lazyPut()`
-- `lib/app/modules/banners/controller/banner_controller.dart`
-- `lib/app/modules/bookings/view/booking_view.dart` - Change `Get.put(BookingController())` to `Get.lazyPut(() => BookingController())`
-- Any other heavy controllers initialized with `Get.put()` in `initState()`
-
-**Pattern:**
-
-```dart
-// Before:
-final controller = Get.put(HeavyController());
-
-// After:
-Get.lazyPut(() => HeavyController());
-final controller = Get.find<HeavyController>();
-```
-
-### 2.3 Standardize Empty/Error States
-
-**Create reusable widgets:**
-
-- `lib/app/ui_v2/components/feedback/empty_state_v2.dart` - Standard empty state widget
-- `lib/app/ui_v2/components/feedback/skeleton_loader_v2.dart` - Skeleton loader widget
-
-**Files to update:**
-
-- `lib/app/ui_v2/screens/search/search_screen_v2.dart` - Replace plain text empty state
-- `lib/app/ui_v2/screens/bookings/booking_screen_v2.dart` - Add skeleton loaders
-- `lib/app/ui_v2/screens/provider/provider_details_screen_v2.dart` - Improve error states
-- Any list screens showing "No items" messages
-
-### 2.4 Improve Error Handling
-
-**File: `lib/network/supabase_api_services.dart`** (and split services)
-
-- Standardize `_handleResponse()` and `_handleError()` to return:
-  ```dart
-  {
-    'status': bool,
-    'message': String?,
-    'data': dynamic
-  }
-  ```
-
-- Update all service methods to use this format
-- Update repositories to handle standardized format
-- Update controllers to check `status` field
-
----
-
-## P3 – Growth, Provider Tools, Marketing
-
-### 3.1 Provider KPI Dashboard
-
-**File: `lib/app/ui_v2/screens/home/provider_home_screen_v2.dart`**
-
-- Add KPI cards in dashboard section:
-  - **Bookings this month** - Query bookings where `created_at >= start of month`
-  - **Profile views** - Add `profile_views` column to providers table (if not exists) OR use existing metric
-  - **Monthly earnings** - Sum of `total_amount` from completed bookings this month
-  - **Average rating** - Already available in provider profile
-- Use existing `_getDashboardItems()` pattern
-- Add new dashboard items with appropriate icons and navigation
-
-**File: `lib/app/modules/provider_homepage/controller/provider_home_screen_controller.dart`**
-
-- Add methods to fetch:
-  - Monthly bookings count
-  - Monthly earnings
-  - Profile views (if tracked)
-- Store in reactive variables: `RxInt monthlyBookings`, `RxDouble monthlyEarnings`, etc.
-
-### 3.2 In-App Nudges
-
-**File: `lib/app/ui_v2/screens/home/provider_home_screen_v2.dart`**
-
-- Add banner/nudge component at top of screen when:
-  - Profile incomplete: Check if required fields (bio, business_name, avatar) are missing
-  - Portfolio empty: Check if provider has any portfolio items (if portfolio feature exists)
-  - Plans empty: Check if `provider.plans.isEmpty`
-  - Low acceptance rate: Calculate from bookings (accepted / total requests)
-- Use `StatusToastV2` or create new `NudgeBannerV2` component
-- Show dismissible banners with action buttons ("Complete Profile", "Add Plans", etc.)
-
-### 3.3 Marketing & Seasonal Campaigns
-
-**File: `lib/app/ui_v2/screens/home/home_screen_v2.dart`**
-
-- Enhance existing countdown offers (already has `CountdownController`)
-- Ensure banners are localizable
-- Add country-based campaign logic (if needed)
-
----
-
-## Implementation Order
-
-1. **P1.1** - Booking flow improvements (summary + success screen)
-2. **P1.2** - Advanced search discoverability
-3. **P1.3** - Trust signals in provider details
-4. **P1.4** - Authentication guards
-5. **P1.5** - RLS safety patterns
-6. **P2.1** - Split SupabaseApiServices (incremental)
-7. **P2.2** - Lazy load controllers
-8. **P2.3** - Standardize empty/error states
-9. **P2.4** - Error handling standardization
-10. **P3.1** - Provider KPI dashboard
-11. **P3.2** - In-app nudges
-12. **P3.3** - Marketing enhancements
-
----
-
-## Testing Checklist
-
-After each phase:
-
-- [ ] App builds without errors
-- [ ] Booking flow works end-to-end
-- [ ] Advanced search opens and filters work
-- [ ] Trust signals display correctly
-- [ ] Authentication guards block unauthorized access
-- [ ] Provider KPIs calculate correctly
-- [ ] No regressions in existing features
-
----
-
-## Notes
-
-- **DO NOT** modify Supabase schema
-- **DO NOT** change brand colors or UI styling (except for clarity)
-- **DO NOT** change existing navigation patterns (unless required for UX)
-- Preserve all business logic
-- Test incrementally after each major change
+Throughout all phases: keep navigation, controllers, and backend interactions unchanged; focus strictly on visual/structural consistency.
 
 ### To-dos
 
-- [ ] Fix timer in home_screen_v2.dart to use GetX observables instead of setState
-- [ ] Remove shrinkWrap: true from nested ListViews and replace with direct children
-- [ ] Pre-compute reversed lists in ProviderController to avoid repeated operations
-- [ ] Create image cache configuration utility for CachedNetworkImage
-- [ ] Create logger utility to replace print statements
-- [ ] Add const constructors where possible in home_screen_v2.dart
-- [ ] Optimize GetX controller initialization to avoid duplicates
-- [ ] Add RepaintBoundary for expensive widgets
+- [ ] Phase 1.1: Create database migration for provider_portfolios table
+- [ ] Phase 1.2: Add portfolio API methods to SupabaseApiServices
+- [ ] Phase 1.3: Create portfolio repository
+- [ ] Phase 1.4: Create PortfolioModel class
+- [ ] Phase 1.5: Create PortfolioController
+- [ ] Phase 1.6: Create UI components (portfolio card, gallery screen, add/edit screen)
+- [ ] Phase 1.7: Extend UploadFile class for portfolio bucket
+- [ ] Phase 1.8: Integrate portfolio tab in provider details screen
+- [ ] Phase 2.1: Create database migration for quote_requests and price_comparison
+- [ ] Phase 2.2: Create database functions for price comparison
+- [ ] Phase 2.3: Add quote and price comparison API methods
+- [ ] Phase 2.4: Create quote repository
+- [ ] Phase 2.5: Create quote controllers
+- [ ] Phase 2.6: Create quote and price comparison UI components
+- [ ] Phase 3.1: Create database migration for enhanced search
+- [ ] Phase 3.2: Enhance getProviders() with advanced search parameters
+- [ ] Phase 3.3: Extend search repository with filtering methods
+- [ ] Phase 3.4: Update search controller with filter state
+- [ ] Phase 3.5: Create advanced search UI components and filters
+- [ ] Phase 4.1: Create database migration for enhanced reviews
+- [ ] Phase 4.2: Enhance rating API methods with images and category ratings
+- [ ] Phase 4.3: Update rating repository with new methods
+- [ ] Phase 4.4: Update rating controller with image and category rating support
+- [ ] Phase 4.5: Create enhanced review UI components
+- [ ] Align colors/typography/spacing + theme constants
+- [ ] Normalize buttons/cards/inputs/feedback widgets
+- [ ] Refactor consumer/provider home screens
+- [ ] Restyle provider details screen
+- [ ] Align booking summary with new components
+- [ ] Restyle search + chat flows
+- [ ] Update account/profile/auth screens
+- [ ] Polish onboarding/splash/help flows

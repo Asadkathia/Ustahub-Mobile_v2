@@ -4,6 +4,10 @@ import 'package:ustahub/app/modules/common_controller.dart/provider_controller.d
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 import '../provider/provider_details_screen_v2.dart';
 import '../../components/cards/recommendation_card_v2.dart';
+import '../../components/inputs/app_search_field.dart';
+import '../../components/cards/app_card.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
+import '../../components/feedback/empty_state_v2.dart';
 
 class AdvancedSearchScreenV2 extends StatefulWidget {
   final String? initialKeyword;
@@ -150,30 +154,21 @@ class _AdvancedSearchScreenV2State extends State<AdvancedSearchScreenV2> {
             SizedBox(height: AppSpacing.mdVertical),
             
             // Search Field
-            TextField(
+            AppSearchField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search providers or services',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                          });
-                        },
-                      )
-                    : null,
-                fillColor: AppColorsV2.inputBackground,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              hintText: 'Search providers or services',
               onChanged: (_) => setState(() {}),
-              onSubmitted: (_) => _performSearch(),
+              onSubmitted: _performSearch,
+              trailing: _searchController.text.isNotEmpty
+                  ? Icon(Icons.close, color: AppColorsV2.primary)
+                  : null,
+              onFilterTap: _searchController.text.isNotEmpty
+                  ? () {
+                      setState(() {
+                        _searchController.clear();
+                      });
+                    }
+                  : null,
             ),
             
             SizedBox(height: AppSpacing.lgVertical),
@@ -214,136 +209,146 @@ class _AdvancedSearchScreenV2State extends State<AdvancedSearchScreenV2> {
   }
 
   Widget _buildRatingFilter() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Minimum Rating',
-              style: AppTextStyles.bodyMedium,
-            ),
-            Text(
-              _minRating.toStringAsFixed(1),
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColorsV2.primary,
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Minimum Rating',
+                style: AppTextStyles.titleSmall,
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: AppSpacing.smVertical),
-        Slider(
-          value: _minRating,
-          min: 0.0,
-          max: 5.0,
-          divisions: 10,
-          label: _minRating.toStringAsFixed(1),
-          activeColor: AppColorsV2.primary,
-          onChanged: (value) {
-            setState(() {
-              _minRating = value;
-            });
-          },
-        ),
-      ],
+              Text(
+                _minRating.toStringAsFixed(1),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColorsV2.primary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.smVertical),
+          Slider(
+            value: _minRating,
+            min: 0.0,
+            max: 5.0,
+            divisions: 10,
+            label: _minRating.toStringAsFixed(1),
+            activeColor: AppColorsV2.primary,
+            onChanged: (value) {
+              setState(() {
+                _minRating = value;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildServiceFilter() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Service Category',
-          style: AppTextStyles.bodyMedium,
-        ),
-        SizedBox(height: AppSpacing.smVertical),
-        _loadingServices
-            ? const Center(child: CircularProgressIndicator())
-            : DropdownButtonFormField<String>(
-                value: _selectedServiceId,
-                decoration: InputDecoration(
-                  fillColor: AppColorsV2.inputBackground,
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                hint: const Text('All Services'),
-                items: [
-                  const DropdownMenuItem<String>(
-                    value: null,
-                    child: Text('All Services'),
-                  ),
-                  ..._services.map((service) {
-                    return DropdownMenuItem<String>(
-                      value: service['id']?.toString(),
-                      child: Text(service['name'] ?? 'Unknown'),
-                    );
-                  }),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedServiceId = value;
-                  });
-                },
+    if (_loadingServices) {
+      return const SkeletonListItemV2(height: 90);
+    }
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Service Category',
+            style: AppTextStyles.titleSmall,
+          ),
+          SizedBox(height: AppSpacing.smVertical),
+          DropdownButtonFormField<String>(
+            value: _selectedServiceId,
+            decoration: InputDecoration(
+              fillColor: AppColorsV2.inputBackground,
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
+                borderSide: BorderSide.none,
               ),
-      ],
+            ),
+            hint: const Text('All Services'),
+            items: [
+              const DropdownMenuItem<String>(
+                value: null,
+                child: Text('All Services'),
+              ),
+              ..._services.map((service) {
+                return DropdownMenuItem<String>(
+                  value: service['id']?.toString(),
+                  child: Text(service['name'] ?? 'Unknown'),
+                );
+              }),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedServiceId = value;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSortOptions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Sort By',
-          style: AppTextStyles.bodyMedium,
-        ),
-        SizedBox(height: AppSpacing.smVertical),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(
-              value: 'rating',
-              label: Text('Rating'),
-            ),
-            ButtonSegment(
-              value: 'reviews',
-              label: Text('Reviews'),
-            ),
-          ],
-          selected: {_sortBy},
-          onSelectionChanged: (Set<String> newSelection) {
-            setState(() {
-              _sortBy = newSelection.first;
-            });
-          },
-        ),
-      ],
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sort By',
+            style: AppTextStyles.titleSmall,
+          ),
+          SizedBox(height: AppSpacing.smVertical),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(
+                value: 'rating',
+                label: Text('Rating'),
+              ),
+              ButtonSegment(
+                value: 'reviews',
+                label: Text('Reviews'),
+              ),
+            ],
+            selected: {_sortBy},
+            onSelectionChanged: (Set<String> newSelection) {
+              setState(() {
+                _sortBy = newSelection.first;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildVerifiedToggle() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Verified Providers Only',
-          style: AppTextStyles.bodyMedium,
-        ),
-        Switch(
-          value: _verifiedOnly,
-          activeColor: AppColorsV2.primary,
-          onChanged: (value) {
-            setState(() {
-              _verifiedOnly = value;
-            });
-          },
-        ),
-      ],
+    return AppCard(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Verified Providers Only',
+            style: AppTextStyles.titleSmall,
+          ),
+          Switch(
+            value: _verifiedOnly,
+            activeColor: AppColorsV2.primary,
+            onChanged: (value) {
+              setState(() {
+                _verifiedOnly = value;
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -365,11 +370,10 @@ class _AdvancedSearchResultsScreen extends StatelessWidget {
         title: searchTerm.isNotEmpty ? 'Search Results' : 'Filtered Results',
       ),
       body: providers.isEmpty
-          ? Center(
-              child: StatusToastV2(
-                message: 'No providers found',
-                type: StatusToastType.info,
-              ),
+          ? EmptyStateV2(
+              icon: Icons.search_off,
+              title: 'No providers found',
+              subtitle: 'Try adjusting your filters or search term',
             )
           : ListView.builder(
               padding: EdgeInsets.symmetric(

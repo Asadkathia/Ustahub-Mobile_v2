@@ -6,6 +6,7 @@ import 'package:ustahub/app/modules/provider_document/view/provider_document_vie
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 import 'package:ustahub/app/ui_v2/components/feedback/empty_state_v2.dart';
 import 'package:ustahub/app/ui_v2/components/feedback/skeleton_loader_v2.dart';
+import 'package:ustahub/app/ui_v2/components/cards/app_card.dart';
 
 class ProviderDetailsScreenV2 extends StatefulWidget {
   final String id;
@@ -56,7 +57,7 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
           return ListView.builder(
             padding: EdgeInsets.all(AppSpacing.md),
             itemCount: 5,
-            itemBuilder: (_, __) => SkeletonListItemV2(),
+            itemBuilder: (_, __) => const SkeletonListItemV2(),
           );
         }
 
@@ -100,49 +101,58 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
                 SizedBox(height: AppSpacing.mdVertical),
                 _buildRatingSummary(context, provider),
                 SizedBox(height: AppSpacing.mdVertical),
-                Text(
-                  AppLocalizations.of(context)!.services,
-                  style: AppTextStyles.heading3,
-                ),
-                SizedBox(height: AppSpacing.smVertical),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: services
-                      .map(
-                        (service) => ServiceChipV2(
-                          label: service.name ?? '',
-                          icon: Icons.build,
-                          isSelected:
-                              plansController.selectedService.value?.id ==
-                                  service.id,
-                          onTap: () {
-                            plansController.selectServiceAndPlan(service, plans);
-                          },
-                        ),
-                      )
-                      .toList(),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.services,
+                        style: AppTextStyles.titleMedium,
+                      ),
+                      SizedBox(height: AppSpacing.smVertical),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: services
+                            .map(
+                              (service) => ServiceChipV2(
+                                label: service.name ?? '',
+                                icon: Icons.build,
+                                isSelected:
+                                    plansController.selectedService.value?.id ==
+                                        service.id,
+                                onTap: () {
+                                  plansController.selectServiceAndPlan(service, plans);
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: AppSpacing.mdVertical),
                 if (providerDetails.overview != null)
                   _buildOverviewCard(providerDetails.overview!),
                 if (providerDetails.overview != null)
                   SizedBox(height: AppSpacing.mdVertical),
-                Text(
-                  'About',
-                  style: AppTextStyles.heading3,
-                ),
-                SizedBox(height: AppSpacing.xsVertical),
-                Text(
-                  provider?.bio?.isNotEmpty == true ? provider!.bio! : 'N/A',
-                  style: AppTextStyles.bodyMedium,
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'About',
+                        style: AppTextStyles.titleMedium,
+                      ),
+                      SizedBox(height: AppSpacing.xsVertical),
+                      Text(
+                        provider?.bio?.isNotEmpty == true ? provider!.bio! : 'N/A',
+                        style: AppTextStyles.bodyMediumSecondary,
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: AppSpacing.mdVertical),
-                Text(
-                  'Ratings',
-                  style: AppTextStyles.heading3,
-                ),
-                SizedBox(height: AppSpacing.smVertical),
                 _buildRatingsSection(),
                 SizedBox(height: AppSpacing.lgVertical),
                 SecondaryButtonV2(
@@ -371,19 +381,8 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
   }
 
   Widget _buildOverviewCard(Overview overview) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Row(
         children: [
           _OverviewStat(
@@ -408,23 +407,46 @@ class _ProviderDetailsScreenV2State extends State<ProviderDetailsScreenV2> {
     final ratingsController = controller.ratingsController;
     return Obx(() {
       if (ratingsController.isLoadingRatings.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const SkeletonListItemV2();
       }
 
       final ratings = ratingsController.latestFiveRatings;
       if (ratings.isEmpty) {
-        return StatusToastV2(
-          message: 'No reviews yet',
-          type: StatusToastType.info,
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ratings',
+                style: AppTextStyles.titleMedium,
+              ),
+              SizedBox(height: AppSpacing.smVertical),
+              Text(
+                'No reviews yet',
+                style: AppTextStyles.bodyMediumSecondary,
+              ),
+              SizedBox(height: AppSpacing.xsVertical),
+              Text(
+                'Completed bookings will appear here once customers leave feedback.',
+                style: AppTextStyles.captionSmall,
+              ),
+            ],
+          ),
         );
       }
 
-      return Column(
-        children: ratings
-            .map(
-              (rating) => _RatingTile(rating: rating),
-            )
-            .toList(),
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ratings',
+              style: AppTextStyles.titleMedium,
+            ),
+            SizedBox(height: AppSpacing.smVertical),
+            ...ratings.map((rating) => _RatingTile(rating: rating)).toList(),
+          ],
+        ),
       );
     });
   }
@@ -449,19 +471,8 @@ class _ProviderHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Row(
         children: [
           ClipRRect(
@@ -610,50 +621,48 @@ class _RatingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColorsV2.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage(
-              rating.consumer.avatar ?? blankProfileImage,
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
+      child: AppCard(
+        bordered: false,
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: NetworkImage(
+                rating.consumer.avatar ?? blankProfileImage,
+              ),
+              radius: 22.r,
             ),
-            radius: 22.r,
-          ),
-          SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rating.consumer.name ?? '',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    rating.review ?? '',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(Icons.star, color: Colors.amber, size: 18.sp),
+                SizedBox(width: 4.w),
                 Text(
-                  rating.consumer.name ?? '',
-                  style: AppTextStyles.bodyMedium,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  rating.review ?? '',
+                  rating.starRating.toStringAsFixed(1),
                   style: AppTextStyles.bodySmall,
                 ),
               ],
             ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.star, color: Colors.amber, size: 18.sp),
-              SizedBox(width: 4.w),
-              Text(
-                rating.starRating.toStringAsFixed(1),
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

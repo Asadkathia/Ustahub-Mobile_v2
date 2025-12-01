@@ -26,6 +26,9 @@ import '../search/advanced_search_screen_v2.dart';
 import '../../components/cards/recommendation_card_v2.dart';
 import '../provider/provider_details_screen_v2.dart';
 import '../../utils/service_icon_helper.dart';
+import '../../components/cards/app_card.dart';
+import '../../components/inputs/app_search_field.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
 
 class HomeScreenV2 extends StatefulWidget {
   const HomeScreenV2({super.key});
@@ -142,12 +145,15 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 0,
-        right: 0,
-        bottom: 0,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenPaddingHorizontal,
+        AppSpacing.mdVertical,
+        AppSpacing.screenPaddingHorizontal,
+        AppSpacing.smVertical,
       ),
-      child: GestureDetector(
+      child: AppSearchField(
+        hintText: AppLocalizations.of(context)!.search,
+        readOnly: true,
         onTap: () {
           if (UIConfig.useNewUI) {
             Get.to(() => SearchScreenV2());
@@ -155,83 +161,42 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
             Get.to(() => SearchView());
           }
         },
-        child: Container(
-          height: 50.h,
-          decoration: BoxDecoration(
-            color: AppColorsV2.primary,
-            borderRadius: BorderRadius.zero,
-          ),
-          child: Row(
-            children: [
-              SizedBox(width: AppSpacing.screenPaddingHorizontal),
-              Icon(
-                Icons.search,
-                color: AppColorsV2.textOnPrimary,
-                size: 22.w,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Center(
-                  child: OverflowBox(
-                    maxHeight: double.infinity,
-                      child: Image.asset(
-                      'images/Logo/Ustahub logo copy12.png',
-                      height: 120.h,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Text(
-                          'USTAHUB',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: AppColorsV2.textOnPrimary,
-                            letterSpacing: 1.2,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Get.to(() => const AdvancedSearchScreenV2());
-                },
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
-                  child: Icon(
-                    Icons.tune,
-                    color: AppColorsV2.textOnPrimary,
-                    size: 22.w,
-                  ),
-                ),
-              ),
-              SizedBox(width: AppSpacing.screenPaddingHorizontal),
-            ],
-          ),
-        ),
+        onFilterTap: () => Get.to(() => const AdvancedSearchScreenV2()),
       ),
     );
   }
 
   Widget _buildHeroBanner() {
-    return Obx(() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingHorizontal),
+      child: Obx(() {
       final List<BannerModelClass> banners = bannerController.bannersList;
       final bool isLoading = bannerController.isLoading.value;
 
       if (isLoading) {
-        return SizedBox(
-          height: 200.h,
-          child: const Center(child: CircularProgressIndicator()),
+          return AppCard(
+            bordered: false,
+            enableShadow: true,
+            padding: EdgeInsets.zero,
+            child: SkeletonLoaderV2(
+              width: double.infinity,
+              height: 200.h,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+            ),
         );
       }
 
       if (banners.isEmpty) {
-        return Container(
-          height: 200.h,
-          color: AppColorsV2.surface,
-          child: Center(
-            child: Text(
-              'No banners available',
-              style: AppTextStyles.bodyMediumSecondary,
+          return AppCard(
+            bordered: false,
+            enableShadow: true,
+            child: SizedBox(
+              height: 180.h,
+              child: Center(
+                child: Text(
+                  'No banners available',
+                  style: AppTextStyles.bodyMediumSecondary,
+                ),
             ),
           ),
         );
@@ -261,19 +226,20 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
             print('[BANNER] Invalid banner: image=${banner.image}');
           }
         }
-        return Container(
-          height: 200.h,
-          color: AppColorsV2.surface,
-          child: Center(
+        return AppCard(
+          bordered: false,
+          enableShadow: true,
+          child: SizedBox(
+            height: 180.h,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.image_not_supported,
-                  size: 48.w,
+                  size: AppSpacing.iconXLarge,
                   color: AppColorsV2.textTertiary,
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.smVertical),
                 Text(
                   'Banner images unavailable',
                   style: AppTextStyles.bodyMediumSecondary,
@@ -290,116 +256,89 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
         currentBannerIndex = 0;
       }
 
-      return Stack(
-        children: [
-          CarouselSlider(
-            carouselController: carouselController,
-            items: validBanners.map((banner) {
-              final imageUrl = banner.image ?? '';
-              
-              if (kDebugMode) {
-                print('[BANNER] Loading image: $imageUrl');
-              }
-              
-              return Container(
-                margin: EdgeInsets.zero,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.zero,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
-                        alignment: const Alignment(0.1, 0),
-                        placeholder: (context, url) => Container(
-                          color: AppColorsV2.surface,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColorsV2.primary,
-                              strokeWidth: 2,
+      return AppCard(
+        bordered: false,
+        enableShadow: true,
+        padding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            CarouselSlider(
+              carouselController: carouselController,
+              items: validBanners.map((banner) {
+                final imageUrl = banner.image ?? '';
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => SkeletonLoaderV2(
+                      width: double.infinity,
+                      height: 200.h,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColorsV2.surface,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_not_supported,
+                            size: AppSpacing.iconXLarge,
+                            color: AppColorsV2.textTertiary,
+                          ),
+                          SizedBox(height: AppSpacing.xsVertical),
+                          Text(
+                            'Failed to load',
+                            style: AppTextStyles.captionSmall.copyWith(
+                              color: AppColorsV2.textTertiary,
                             ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) {
-                          if (kDebugMode) {
-                            print('[BANNER] ❌ Error loading image: $url');
-                            print('[BANNER] Error: $error');
-                          }
-                          return Container(
-                            color: AppColorsV2.surface,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.image_not_supported,
-                                  size: AppSpacing.iconXLarge,
-                                  color: AppColorsV2.textTertiary,
-                                ),
-                                if (kDebugMode) ...[
-                                  SizedBox(height: 8.h),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                                    child: Text(
-                                      'Failed to load',
-                                      style: AppTextStyles.captionSmall.copyWith(
-                                        color: AppColorsV2.textTertiary,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          );
-                        },
-                        memCacheWidth: (400 * MediaQuery.of(context).devicePixelRatio).round(),
-                        memCacheHeight: (200 * MediaQuery.of(context).devicePixelRatio).round(),
-                        maxWidthDiskCache: 800,
-                        maxHeightDiskCache: 600,
+                        ],
                       ),
-                      Positioned(
-                        bottom: AppSpacing.mdVertical,
-                        right: AppSpacing.screenPaddingHorizontal,
-                        child: Row(
-                          children: List.generate(
-                            totalBanners,
-                            (index) => Container(
-                              margin: EdgeInsets.symmetric(horizontal: 4.w),
-                              width:
-                                  currentBannerIndex == index ? 8.w : 6.w,
-                              height: 6.h,
-                              decoration: BoxDecoration(
-                                color: currentBannerIndex == index
-                                    ? AppColorsV2.textOnPrimary
-                                    : AppColorsV2.textOnPrimary
-                                        .withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(3.r),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ),
+                );
+              }).toList(),
+              options: CarouselOptions(
+                height: 200.h,
+                viewportFraction: 1.0,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 5),
+                onPageChanged: (index, reason) {
+                  setState(() {
+                    currentBannerIndex = index;
+                  });
+                },
+              ),
+            ),
+            Positioned(
+              bottom: 16.h,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  totalBanners,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: currentBannerIndex == index ? 20.w : 8.w,
+                    height: 6.h,
+                    margin: EdgeInsets.symmetric(horizontal: 3.w),
+                    decoration: BoxDecoration(
+                      color: currentBannerIndex == index
+                          ? AppColorsV2.textOnPrimary
+                          : AppColorsV2.textOnPrimary.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
-            options: CarouselOptions(
-              height: 200.h,
-              viewportFraction: 1.0,
-              autoPlay: true,
-              autoPlayInterval: const Duration(seconds: 5),
-              onPageChanged: (index, reason) {
-                setState(() {
-                  currentBannerIndex = index;
-                });
-              },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
-    });
+    }),
+    );
   }
 
   Widget _buildLimitedOfferSection() {
@@ -620,23 +559,10 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                     crossAxisCount: 4,
                     crossAxisSpacing: AppSpacing.sm,
                     mainAxisSpacing: AppSpacing.xs,
-                    childAspectRatio: 0.7,
+                    childAspectRatio: 0.75,
                   ),
                   itemCount: 4,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: AppColorsV2.surface,
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                      ),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColorsV2.primary,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    );
-                  },
+                  itemBuilder: (context, index) => const SkeletonGridItemV2(),
                 );
               }
 
@@ -759,19 +685,7 @@ class _HomeScreenV2State extends State<HomeScreenV2> {
                 return Column(
                   children: List.generate(
                     3,
-                    (index) => Container(
-                      height: 120.h,
-                      margin: EdgeInsets.only(bottom: AppSpacing.mdVertical),
-                      decoration: BoxDecoration(
-                        color: AppColorsV2.surface,
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-                      ),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColorsV2.primary,
-                        ),
-                      ),
-                    ),
+                    (index) => const SkeletonListItemV2(),
                   ),
                 );
               }

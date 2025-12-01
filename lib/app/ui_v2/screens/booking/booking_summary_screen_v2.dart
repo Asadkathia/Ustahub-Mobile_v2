@@ -5,6 +5,8 @@ import 'package:ustahub/app/modules/provider_details/controller/plan_selection_c
 import 'package:ustahub/app/ui_v2/ui_v2_exports.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ustahub/utils/contstants/constants.dart';
+import 'package:ustahub/app/ui_v2/components/cards/app_card.dart';
+import 'package:ustahub/app/ui_v2/components/feedback/skeleton_loader_v2.dart';
 
 class BookingSummaryScreenV2 extends StatelessWidget {
   final String providerId,
@@ -114,10 +116,19 @@ class BookingSummaryScreenV2 extends StatelessWidget {
             onPressed: bookingController.isLoading.value
                 ? null
                 : () async {
-                    // Get selected plan ID
+                    // Ensure a plan is selected before proceeding
                     final selectedPlan = plansController.selectedPlan.value;
-                    final planId = selectedPlan?.id;
-                    
+                    if (selectedPlan == null) {
+                      CustomToast.error('Please select a plan before continuing');
+                      return;
+                    }
+
+                    final planId = selectedPlan.id;
+
+                    // Safely handle visiting charge
+                    final double safeVisitCharge =
+                        (visitingCharge as num?)?.toDouble() ?? 0.0;
+
                     final bookingData = {
                       "booking_id":
                           "BOOK-${DateTime.now().millisecondsSinceEpoch}",
@@ -127,7 +138,7 @@ class BookingSummaryScreenV2 extends StatelessWidget {
                       "address_id": addressId,
                       "booking_date": bookingDate,
                       "booking_time": bookingTime,
-                      "visiting_charge": visitingCharge,
+                      "visiting_charge": safeVisitCharge,
                       "note": note,
                       "provider_name": providerName,
                       "service_name": serviceName,
@@ -152,19 +163,8 @@ class BookingSummaryScreenV2 extends StatelessWidget {
     required String category,
     required double rating,
   }) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Row(
         children: [
           ClipRRect(
@@ -174,16 +174,10 @@ class BookingSummaryScreenV2 extends StatelessWidget {
               width: 80.w,
               height: 80.h,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
+              placeholder: (context, url) => SkeletonLoaderV2(
                 width: 80.w,
                 height: 80.h,
-                color: AppColorsV2.surface,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColorsV2.primary,
-                    strokeWidth: 2,
-                  ),
-                ),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
               ),
               errorWidget: (context, url, error) => Container(
                 width: 80.w,
@@ -247,19 +241,8 @@ class BookingSummaryScreenV2 extends StatelessWidget {
     required String dateTime,
     required String serviceName,
   }) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -336,25 +319,60 @@ class BookingSummaryScreenV2 extends StatelessWidget {
   Widget _buildPriceBreakdownCard() {
     // Get selected plan
     final selectedPlan = plansController.selectedPlan.value;
-    final planPrice = double.tryParse(selectedPlan?.planPrice ?? '0') ?? 0.0;
-    final visitFee = visitingCharge.toDouble();
+
+    // If no plan is selected yet, show a friendly message instead of calculating
+    if (selectedPlan == null) {
+      return AppCard(
+        enableShadow: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppSpacing.xs),
+                  decoration: BoxDecoration(
+                    color: AppColorsV2.primaryLight.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+                  ),
+                  child: Icon(
+                    Icons.receipt_long,
+                    color: AppColorsV2.primary,
+                    size: AppSpacing.iconMedium,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.md),
+                Text(
+                  'Price Breakdown',
+                  style: AppTextStyles.heading3,
+                ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.mdVertical),
+            Text(
+              'Select a plan to see the full price breakdown.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColorsV2.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final planPrice =
+        double.tryParse(selectedPlan.planPrice ?? '0') ?? 0.0;
+
+    // Safely handle visiting charge in case of configuration issues
+    final double visitFee =
+        (visitingCharge as num?)?.toDouble() ?? 0.0;
+
     final itemTotal = planPrice + visitFee;
     final serviceFee = itemTotal * 0.05;
     final totalAmount = itemTotal + serviceFee;
 
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

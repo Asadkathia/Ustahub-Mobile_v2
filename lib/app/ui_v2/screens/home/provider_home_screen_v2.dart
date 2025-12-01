@@ -6,6 +6,8 @@ import 'package:ustahub/app/modules/my_service/view/my_service_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
 import '../../components/feedback/nudge_banner_v2.dart';
+import '../../components/cards/app_card.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
@@ -17,8 +19,12 @@ class ProviderHomeScreenV2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profileController = Get.put(ProviderProfileController());
-    final homeController = Get.put(ProviderHomeScreenController());
+    final profileController = Get.isRegistered<ProviderProfileController>()
+        ? Get.find<ProviderProfileController>()
+        : Get.put(ProviderProfileController());
+    final homeController = Get.isRegistered<ProviderHomeScreenController>()
+        ? Get.find<ProviderHomeScreenController>()
+        : Get.put(ProviderHomeScreenController());
 
     profileController.fetchProfile();
     homeController.fetchProviderHomeScreenData();
@@ -83,14 +89,7 @@ class ProviderHomeScreenV2 extends StatelessWidget {
                         : _getDashboardItems(homeController).length,
                     itemBuilder: (context, index) {
                       if (homeController.isLoading.value) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: AppColorsV2.surface,
-                            borderRadius: BorderRadius.circular(
-                              AppSpacing.radiusLarge,
-                            ),
-                          ),
-                        ).withShimmerAi(loading: true);
+                        return const SkeletonGridItemV2();
                       }
 
                       final items = _getDashboardItems(homeController);
@@ -139,30 +138,16 @@ class ProviderHomeScreenV2 extends StatelessWidget {
     bool isLoading = false,
   }) {
     if (isLoading) {
-      return Container(
-        height: 80.h,
-        decoration: BoxDecoration(
-          color: AppColorsV2.surface,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        ),
-      ).withShimmerAi(loading: true);
+      return const SkeletonListItemV2(
+        height: 90,
+        padding: EdgeInsets.all(0),
+      );
     }
 
     String avatarUrl = imageUrl ?? blankProfileImage;
     
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Row(
         children: [
           CircleAvatar(
@@ -206,19 +191,8 @@ class ProviderHomeScreenV2 extends StatelessWidget {
     required String value,
     required Color iconColor,
   }) {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColorsV2.background,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsV2.shadowMedium,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      enableShadow: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -355,28 +329,11 @@ class ProviderHomeScreenV2 extends StatelessWidget {
           '0.0';
 
       if (isLoading) {
-        return Container(
-          height: 90.h,
-          decoration: BoxDecoration(
-            color: AppColorsV2.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-          ),
-        ).withShimmerAi(loading: true);
+        return const SkeletonListItemV2(height: 100);
       }
 
-      return Container(
-        padding: EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColorsV2.background,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-          boxShadow: [
-            BoxShadow(
-              color: AppColorsV2.shadowLight,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      return AppCard(
+        enableShadow: true,
         child: Row(
           children: [
             Container(

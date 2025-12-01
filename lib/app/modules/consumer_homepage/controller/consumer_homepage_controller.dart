@@ -11,13 +11,29 @@ class ConsumerHomepageController extends GetxController {
     Get.lazyPut(() => ProviderServiceSelectionController());
     return Get.find<ProviderServiceSelectionController>();
   }
-  final providerController = Get.find<ProviderController>();
+  ProviderController get providerController {
+    if (!Get.isRegistered<ProviderController>()) {
+      Get.lazyPut(() => ProviderController());
+    }
+    return Get.find<ProviderController>();
+  }
   BannerController get bannerController {
     Get.lazyPut(() => BannerController());
     return Get.find<BannerController>();
   }
-  final consumerProfile = Get.find<ConsumerProfileController>();
-  final providerProfile = Get.find<ProviderProfileController>();
+  ConsumerProfileController get consumerProfile {
+    if (!Get.isRegistered<ConsumerProfileController>()) {
+      Get.lazyPut(() => ConsumerProfileController());
+    }
+    return Get.find<ConsumerProfileController>();
+  }
+
+  ProviderProfileController get providerProfile {
+    if (!Get.isRegistered<ProviderProfileController>()) {
+      Get.lazyPut(() => ProviderProfileController());
+    }
+    return Get.find<ProviderProfileController>();
+  }
 
   FavouriteProviderController get favouriteProvider {
     Get.lazyPut(() => FavouriteProviderController());

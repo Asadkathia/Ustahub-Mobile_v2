@@ -32,6 +32,27 @@ class AppTextStyles {
     color: AppColorsV2.textPrimary,
     height: 1.4,
   );
+
+  static TextStyle get titleLarge => GoogleFonts.inter(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColorsV2.textPrimary,
+        height: 1.35,
+      );
+
+  static TextStyle get titleMedium => GoogleFonts.inter(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColorsV2.textPrimary,
+        height: 1.4,
+      );
+
+  static TextStyle get titleSmall => GoogleFonts.inter(
+        fontSize: 15.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColorsV2.textPrimary,
+        height: 1.4,
+      );
   
   // Body Text Styles
   static TextStyle get bodyLarge => GoogleFonts.inter(
@@ -69,6 +90,14 @@ class AppTextStyles {
     color: AppColorsV2.textTertiary,
     height: 1.3,
   );
+
+  static TextStyle get overline => GoogleFonts.inter(
+        fontSize: 10.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+        color: AppColorsV2.textSecondary,
+        height: 1.2,
+      );
   
   // Button Text Styles
   static TextStyle get buttonLarge => GoogleFonts.inter(
@@ -152,6 +181,28 @@ class AppTextStyles {
         fontSize: 14.sp,
         fontWeight: FontWeight.w600,
         color: AppColorsV2.primary,
+      );
+
+  static TextStyle get chipLabel => GoogleFonts.inter(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColorsV2.textPrimary,
+      );
+
+  static TextStyle get badge => GoogleFonts.inter(
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColorsV2.textOnPrimary,
+        letterSpacing: 0.5,
+      );
+
+  static TextStyle get captionSecondary =>
+      caption.copyWith(color: AppColorsV2.textSecondary);
+
+  static TextStyle get labelSmall => GoogleFonts.inter(
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColorsV2.textSecondary,
       );
 }
 

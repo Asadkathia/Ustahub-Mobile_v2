@@ -3,6 +3,9 @@ import 'package:ustahub/app/export/exports.dart';
 import 'package:ustahub/app/modules/chat/controller/chat_controller.dart';
 import 'package:ustahub/app/modules/chat/model/chat_model.dart';
 import '../../components/navigation/app_app_bar_v2.dart';
+import '../../components/cards/app_card.dart';
+import '../../components/feedback/skeleton_loader_v2.dart';
+import '../../components/feedback/empty_state_v2.dart';
 import '../../design_system/colors/app_colors_v2.dart';
 import '../../design_system/typography/app_text_styles.dart';
 import '../../design_system/spacing/app_spacing.dart';
@@ -20,30 +23,18 @@ class ChatScreenV2 extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: AppColorsV2.primary,
-            ),
+          return ListView.builder(
+            padding: EdgeInsets.all(AppSpacing.screenPaddingHorizontal),
+            itemCount: 6,
+            itemBuilder: (_, __) => const SkeletonListItemV2(),
           );
         }
 
         if (controller.chats.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  size: AppSpacing.iconXLarge,
-                  color: AppColorsV2.textTertiary,
-                ),
-                SizedBox(height: AppSpacing.mdVertical),
-                Text(
-                  'No conversations found',
-                  style: AppTextStyles.bodyMediumSecondary,
-                ),
-              ],
-            ),
+          return EmptyStateV2(
+            icon: Icons.chat_bubble_outline,
+            title: 'No conversations found',
+            subtitle: 'Start a booking to chat with providers or customers.',
           );
         }
 
@@ -69,19 +60,8 @@ class ChatScreenV2 extends StatelessWidget {
                   ),
                 );
               },
-              child: Container(
-                padding: EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColorsV2.cardBackground,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColorsV2.shadowLight,
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
+              child: AppCard(
+                enableShadow: true,
                 child: Row(
                   children: [
                     CircleAvatar(
