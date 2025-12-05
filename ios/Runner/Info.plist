@@ -50,11 +50,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>We require camera access to upload photos</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to provide full address detection.</string>
+	<string>UstaHub uses your location while the app is in use or in the background to auto-fill your address and surface relevant local service providers in your area, for example when booking a home repair visit.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Allow location access in the background for better address accuracy.</string>
+	<string>Allow UstaHub to access your location in the background so we can keep your saved address and nearby provider recommendations up to date, for example when you reopen the app to book a new service.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to show address details.</string>
+	<string>UstaHub uses your location to show nearby service providers and local offers, for example to sort electricians and cleaners by distance in your city when you search.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We require microphone access to send voice notes on chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
